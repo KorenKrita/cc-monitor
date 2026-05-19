@@ -1,5 +1,7 @@
 # CC Monitor
 
+[中文文档](README_CN.md)
+
 Real-time Claude Code performance metrics in your macOS menu bar.
 
 CC Monitor watches Claude Code's JSONL session logs, parses every API request, and displays live throughput stats (tok/s, TTFT) directly in the macOS status bar. Click to open a chart popover with historical data by model.
