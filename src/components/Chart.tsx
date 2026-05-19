@@ -71,7 +71,7 @@ export function Chart({ requests, metric, timeRange, selectedModels, models, the
             if (timeRange === "1h") {
               return `${d.getHours().toString().padStart(2, "0")}:${d.getMinutes().toString().padStart(2, "0")}`;
             }
-            return `${d.getHours()}`;
+            return `${d.getHours()}:00`;
           },
         },
         splitLine: { show: false },
