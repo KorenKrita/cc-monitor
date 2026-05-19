@@ -30,6 +30,7 @@ fn main() {
             // Create tray with idle text (transparent icon, text-only appearance)
             let idle_text = tray::format_idle_tray_text(&config.tray);
             let _tray = TrayIconBuilder::new()
+                .icon(tauri::image::Image::from_bytes(include_bytes!("../icons/tray-icon.png")).expect("bad icon"))
                 .icon_as_template(true)
                 .title(&idle_text)
                 .tooltip("CC Monitor")

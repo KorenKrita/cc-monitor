@@ -64,13 +64,20 @@ impl Database {
         Ok(conn.last_insert_rowid())
     }
 
-    pub fn query_requests(&self, since: &str, model_filter: Option<&[String]>) -> Result<Vec<RequestRecord>, String> {
+    pub fn query_requests(&self, since: &str, until: Option<&str>, model_filter: Option<&[String]>) -> Result<Vec<RequestRecord>, String> {
         let conn = self.conn.lock().map_err(|e| e.to_string())?;
         let mut sql = "SELECT id, timestamp, model, input_tokens, output_tokens, cache_creation_tokens, cache_read_tokens, duration_ms FROM requests WHERE timestamp >= ?1".to_string();
 
+        let mut param_idx = 2;
+
+        if let Some(_) = until {
+            sql.push_str(&format!(" AND timestamp < ?{}", param_idx));
+            param_idx += 1;
+        }
+
         if let Some(models) = model_filter {
             if !models.is_empty() {
-                let placeholders: Vec<String> = models.iter().enumerate().map(|(i, _)| format!("?{}", i + 2)).collect();
+                let placeholders: Vec<String> = models.iter().enumerate().map(|(i, _)| format!("?{}", i + param_idx)).collect();
                 sql.push_str(&format!(" AND model IN ({})", placeholders.join(",")));
             }
         }
@@ -80,6 +87,9 @@ impl Database {
         let mut stmt = conn.prepare(&sql).map_err(|e| e.to_string())?;
 
         let mut param_values: Vec<Box<dyn rusqlite::types::ToSql>> = vec![Box::new(since.to_string())];
+        if let Some(u) = until {
+            param_values.push(Box::new(u.to_string()));
+        }
         if let Some(models) = model_filter {
             for m in models {
                 param_values.push(Box::new(m.clone()));

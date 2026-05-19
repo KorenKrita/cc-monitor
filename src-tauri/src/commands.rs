@@ -9,8 +9,8 @@ pub struct AppState {
 }
 
 #[tauri::command]
-pub fn get_requests(state: State<AppState>, since: String, models: Option<Vec<String>>) -> Result<Vec<RequestRecord>, String> {
-    state.db.query_requests(&since, models.as_deref())
+pub fn get_requests(state: State<AppState>, since: String, until: Option<String>, models: Option<Vec<String>>) -> Result<Vec<RequestRecord>, String> {
+    state.db.query_requests(&since, until.as_deref(), models.as_deref())
 }
 
 #[tauri::command]

@@ -25,9 +25,10 @@ export function useMonitorData() {
   }, []);
 
   const fetchData = useCallback(async (timeRange: TimeRange, modelFilter?: string[]) => {
-    const since = getSinceTimestamp(timeRange);
+    const { since, until } = getTimeRange(timeRange);
     const data = await invoke<RequestRecord[]>("get_requests", {
       since,
+      until: until || null,
       models: modelFilter && modelFilter.length > 0 ? modelFilter : null,
     });
     setRequests(data);
@@ -36,16 +37,26 @@ export function useMonitorData() {
   return { requests, models, latest, fetchData };
 }
 
-function getSinceTimestamp(range: TimeRange): string {
+function getTimeRange(range: TimeRange): { since: string; until: string | null } {
   const now = new Date();
   switch (range) {
     case "1h":
-      return new Date(now.getTime() - 60 * 60 * 1000).toISOString();
+      return {
+        since: new Date(now.getTime() - 60 * 60 * 1000).toISOString(),
+        until: null,
+      };
     case "today":
-      return new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
+      return {
+        since: new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString(),
+        until: null,
+      };
     case "yesterday": {
-      const yesterday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1);
-      return yesterday.toISOString();
+      const yesterdayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1);
+      const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      return {
+        since: yesterdayStart.toISOString(),
+        until: todayStart.toISOString(),
+      };
     }
   }
 }
