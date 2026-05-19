@@ -122,3 +122,62 @@ pub fn save_config(config: &Config) -> Result<(), String> {
     let content = serde_json::to_string_pretty(config).map_err(|e| e.to_string())?;
     fs::write(dir.join("settings.json"), content).map_err(|e| e.to_string())
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_default_config_has_cost() {
+        let config = Config::default();
+        assert_eq!(config.cost.time_window, "day");
+        assert_eq!(config.cost.watch_sources, vec!["claude", "codex"]);
+        assert!(config.cost.model_prices.is_empty());
+        assert!(config.cost.project_whitelist.is_empty());
+        assert!(config.cost.last_sync_time.is_none());
+    }
+
+    #[test]
+    fn test_deserialize_without_cost_field() {
+        let json = r#"{"theme":"dark","tray":{"items":["out_rate"]},"model_aliases":{}}"#;
+        let config: Config = serde_json::from_str(json).unwrap();
+        assert_eq!(config.cost.time_window, "day");
+        assert_eq!(config.cost.watch_sources, vec!["claude", "codex"]);
+    }
+
+    #[test]
+    fn test_serialize_roundtrip() {
+        let mut config = Config::default();
+        config.cost.model_prices.insert("claude-opus-4-7".to_string(), ModelPrice {
+            input: 15.0,
+            output: 75.0,
+            cache: 1.88,
+            source: "manual".to_string(),
+        });
+        config.cost.time_window = "month".to_string();
+
+        let json = serde_json::to_string(&config).unwrap();
+        let parsed: Config = serde_json::from_str(&json).unwrap();
+        assert_eq!(parsed.cost.time_window, "month");
+        assert_eq!(parsed.cost.model_prices["claude-opus-4-7"].input, 15.0);
+        assert_eq!(parsed.cost.model_prices["claude-opus-4-7"].source, "manual");
+    }
+
+    #[test]
+    fn test_model_price_defaults() {
+        let json = r#"{"input": 10.0, "output": 30.0}"#;
+        let price: ModelPrice = serde_json::from_str(json).unwrap();
+        assert_eq!(price.cache, 0.0);
+        assert_eq!(price.source, "manual");
+    }
+
+    #[test]
+    fn test_cost_config_with_whitelist() {
+        let json = r#"{"time_window":"year","project_whitelist":["-Users-test"],"model_whitelist":["claude-opus-4-7"],"model_prices":{},"watch_sources":["claude"]}"#;
+        let cost: CostConfig = serde_json::from_str(json).unwrap();
+        assert_eq!(cost.time_window, "year");
+        assert_eq!(cost.project_whitelist, vec!["-Users-test"]);
+        assert_eq!(cost.model_whitelist, vec!["claude-opus-4-7"]);
+        assert_eq!(cost.watch_sources, vec!["claude"]);
+    }
+}

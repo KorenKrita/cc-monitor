@@ -136,3 +136,62 @@ pub fn extract_project_from_claude_path(path: &std::path::Path) -> String {
     }
     String::new()
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::path::PathBuf;
+
+    #[test]
+    fn test_extract_project_from_claude_path() {
+        let path = PathBuf::from("/Users/korenkrita/.claude/projects/-Users-korenkrita-Coding-cc-monitor/sessions/abc.jsonl");
+        assert_eq!(extract_project_from_claude_path(&path), "-Users-korenkrita-Coding-cc-monitor");
+    }
+
+    #[test]
+    fn test_extract_project_nested_session() {
+        let path = PathBuf::from("/home/user/.claude/projects/my-project/deep/nested/file.jsonl");
+        assert_eq!(extract_project_from_claude_path(&path), "my-project");
+    }
+
+    #[test]
+    fn test_extract_project_non_claude_path() {
+        let path = PathBuf::from("/tmp/random/file.jsonl");
+        assert_eq!(extract_project_from_claude_path(&path), "");
+    }
+
+    #[test]
+    fn test_parse_user_then_assistant() {
+        let tracker = SessionTracker::new();
+
+        let user_line = r#"{"type":"user","timestamp":"2026-05-20T10:00:00Z","sessionId":"s1","message":{}}"#;
+        assert!(tracker.parse_line(user_line).is_none());
+
+        let assistant_line = r#"{"type":"assistant","timestamp":"2026-05-20T10:00:05Z","sessionId":"s1","message":{"model":"claude-opus-4-7","usage":{"input_tokens":1000,"output_tokens":500,"cache_creation_input_tokens":100,"cache_read_input_tokens":200}}}"#;
+        let result = tracker.parse_line(assistant_line).unwrap();
+
+        assert_eq!(result.model, "claude-opus-4-7");
+        assert_eq!(result.input_tokens, 1000);
+        assert_eq!(result.output_tokens, 500);
+        assert_eq!(result.cache_creation_tokens, 100);
+        assert_eq!(result.cache_read_tokens, 200);
+        assert_eq!(result.duration_ms, Some(5000));
+        assert_eq!(result.project, "");
+        assert_eq!(result.source, "");
+    }
+
+    #[test]
+    fn test_parse_assistant_without_user() {
+        let tracker = SessionTracker::new();
+        let line = r#"{"type":"assistant","timestamp":"2026-05-20T10:00:05Z","sessionId":"s1","message":{"model":"claude-opus-4-7","usage":{"input_tokens":1000,"output_tokens":500}}}"#;
+        let result = tracker.parse_line(line).unwrap();
+        assert_eq!(result.duration_ms, None);
+    }
+
+    #[test]
+    fn test_parse_ignores_non_assistant() {
+        let tracker = SessionTracker::new();
+        let line = r#"{"type":"system","timestamp":"2026-05-20T10:00:00Z","sessionId":"s1","message":{}}"#;
+        assert!(tracker.parse_line(line).is_none());
+    }
+}

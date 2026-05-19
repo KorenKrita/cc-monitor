@@ -79,3 +79,64 @@ impl CodexSessionTracker {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_session_meta_stores_cwd() {
+        let tracker = CodexSessionTracker::new();
+        let line = r#"{"type":"session_meta","cwd":"/Users/test/project"}"#;
+        let result = tracker.parse_line(line, "file1");
+        assert!(result.is_none());
+    }
+
+    #[test]
+    fn test_full_flow() {
+        let tracker = CodexSessionTracker::new();
+
+        tracker.parse_line(r#"{"type":"session_meta","cwd":"/Users/test/project"}"#, "f1");
+        tracker.parse_line(r#"{"type":"turn_context","model":"o3-pro"}"#, "f1");
+
+        let event = r#"{"type":"event_msg","info":{"last_token_usage":{"input_tokens":2000,"output_tokens":800,"reasoning_output_tokens":400,"cached_input_tokens":500}}}"#;
+        let result = tracker.parse_line(event, "f1").unwrap();
+
+        assert_eq!(result.model, "o3-pro");
+        assert_eq!(result.input_tokens, 2000);
+        assert_eq!(result.output_tokens, 1200);
+        assert_eq!(result.cache_read_tokens, 500);
+        assert_eq!(result.project, "/Users/test/project");
+        assert_eq!(result.source, "codex");
+    }
+
+    #[test]
+    fn test_no_model_returns_none() {
+        let tracker = CodexSessionTracker::new();
+        tracker.parse_line(r#"{"type":"session_meta","cwd":"/tmp"}"#, "f1");
+
+        let event = r#"{"type":"event_msg","info":{"last_token_usage":{"input_tokens":100,"output_tokens":50}}}"#;
+        assert!(tracker.parse_line(event, "f1").is_none());
+    }
+
+    #[test]
+    fn test_multiple_sessions_isolated() {
+        let tracker = CodexSessionTracker::new();
+
+        tracker.parse_line(r#"{"type":"session_meta","cwd":"/project-a"}"#, "f1");
+        tracker.parse_line(r#"{"type":"turn_context","model":"gpt-4o"}"#, "f1");
+
+        tracker.parse_line(r#"{"type":"session_meta","cwd":"/project-b"}"#, "f2");
+        tracker.parse_line(r#"{"type":"turn_context","model":"o3"}"#, "f2");
+
+        let event = r#"{"type":"event_msg","info":{"last_token_usage":{"input_tokens":100,"output_tokens":50}}}"#;
+
+        let r1 = tracker.parse_line(event, "f1").unwrap();
+        assert_eq!(r1.model, "gpt-4o");
+        assert_eq!(r1.project, "/project-a");
+
+        let r2 = tracker.parse_line(event, "f2").unwrap();
+        assert_eq!(r2.model, "o3");
+        assert_eq!(r2.project, "/project-b");
+    }
+}

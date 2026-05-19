@@ -145,3 +145,95 @@ pub fn format_average_tray_text(db: &Arc<Database>, since: &str, config: &TrayCo
 
     if parts.is_empty() { "—".to_string() } else { parts.join(" ") }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::parser::ParsedRequest;
+
+    fn make_request(out: i64, inp: i64, dur_ms: i64) -> ParsedRequest {
+        ParsedRequest {
+            timestamp: "2026-05-20T10:00:00Z".to_string(),
+            model: "test-model".to_string(),
+            input_tokens: inp,
+            output_tokens: out,
+            cache_creation_tokens: 0,
+            cache_read_tokens: 0,
+            duration_ms: Some(dur_ms),
+            project: "".to_string(),
+            source: "claude".to_string(),
+        }
+    }
+
+    fn make_config(items: Vec<&str>) -> TrayConfig {
+        TrayConfig {
+            items: items.into_iter().map(String::from).collect(),
+            model_filter: "last".to_string(),
+            model_whitelist: vec![],
+            display_mode: "last".to_string(),
+            average_minutes: 5,
+        }
+    }
+
+    #[test]
+    fn test_format_cost_values() {
+        assert_eq!(format_cost(0.0), "$0.00");
+        assert_eq!(format_cost(1.5), "$1.50");
+        assert_eq!(format_cost(99.99), "$99.99");
+        assert_eq!(format_cost(1000.0), "$1.0k");
+        assert_eq!(format_cost(2500.0), "$2.5k");
+    }
+
+    #[test]
+    fn test_calculate_cost_since_all() {
+        assert_eq!(calculate_cost_since("all"), "1970-01-01T00:00:00Z");
+    }
+
+    #[test]
+    fn test_calculate_cost_since_day() {
+        let since = calculate_cost_since("day");
+        assert!(since.contains("T"));
+        assert!(since.len() > 20);
+    }
+
+    #[test]
+    fn test_tray_text_out_rate_only() {
+        let req = make_request(500, 1000, 5000);
+        let config = make_config(vec!["out_rate"]);
+        let text = format_tray_text(&req, &config, None);
+        assert_eq!(text, "✧ ↓100");
+    }
+
+    #[test]
+    fn test_tray_text_with_cost() {
+        let req = make_request(500, 1000, 5000);
+        let config = make_config(vec!["out_rate", "cost"]);
+        let text = format_tray_text(&req, &config, Some(12.34));
+        assert!(text.contains("↓100"));
+        assert!(text.contains("$12.34"));
+    }
+
+    #[test]
+    fn test_tray_text_cost_none_shows_dash() {
+        let req = make_request(500, 1000, 5000);
+        let config = make_config(vec!["cost"]);
+        let text = format_tray_text(&req, &config, None);
+        assert!(text.contains("$—"));
+    }
+
+    #[test]
+    fn test_idle_tray_with_cost() {
+        let config = make_config(vec!["out_rate", "cost"]);
+        let text = format_idle_tray_text(&config, Some(5.67));
+        assert!(text.contains("↓—"));
+        assert!(text.contains("$5.67"));
+    }
+
+    #[test]
+    fn test_empty_items_shows_hexagon() {
+        let config = make_config(vec![]);
+        let req = make_request(500, 1000, 5000);
+        assert_eq!(format_tray_text(&req, &config, None), "✧");
+        assert_eq!(format_idle_tray_text(&config, None), "✧");
+    }
+}
