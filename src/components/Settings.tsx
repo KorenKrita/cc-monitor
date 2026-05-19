@@ -108,7 +108,6 @@ export function Settings({ config, onSave, onClose, theme }: Props) {
           <div style={labelStyle}>Status Bar Model Filter</div>
           <select value={draft.tray.model_filter} onChange={(e) => updateModelFilter(e.target.value)} style={selectStyle}>
             <option value="last">Last Used</option>
-            <option value="all">All Models</option>
             <option value="whitelist">Whitelist</option>
           </select>
           {draft.tray.model_filter === "whitelist" && (
@@ -130,6 +129,33 @@ export function Settings({ config, onSave, onClose, theme }: Props) {
               <div style={{ fontSize: 9, color: theme.muted, marginTop: 3 }}>
                 Comma-separated model names, e.g. claude-opus-4-7, claude-sonnet-4-6
               </div>
+            </div>
+          )}
+        </div>
+
+        {/* Display Mode */}
+        <div>
+          <div style={labelStyle}>Display Mode</div>
+          <select
+            value={draft.tray.display_mode}
+            onChange={(e) => setDraft({ ...draft, tray: { ...draft.tray, display_mode: e.target.value as "last" | "average" } })}
+            style={selectStyle}
+          >
+            <option value="last">Last Request</option>
+            <option value="average">Average</option>
+          </select>
+          {draft.tray.display_mode === "average" && (
+            <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 6 }}>
+              <span style={{ fontSize: 11 }}>Past</span>
+              <input
+                type="number"
+                min={1}
+                max={60}
+                value={draft.tray.average_minutes}
+                onChange={(e) => setDraft({ ...draft, tray: { ...draft.tray, average_minutes: parseInt(e.target.value) || 5 } })}
+                style={{ ...inputStyle, width: 50, textAlign: "center" as const }}
+              />
+              <span style={{ fontSize: 11 }}>minutes</span>
             </div>
           )}
         </div>

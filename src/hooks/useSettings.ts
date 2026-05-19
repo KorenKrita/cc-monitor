@@ -5,7 +5,7 @@ import { Config } from "../types";
 export function useSettings() {
   const [config, setConfig] = useState<Config>({
     theme: "system",
-    tray: { items: ["out_rate", "in_rate", "ttft"], model_filter: "last", model_whitelist: [] },
+    tray: { items: ["out_rate", "in_rate", "ttft"], model_filter: "last", model_whitelist: [], display_mode: "last", average_minutes: 5 },
     model_aliases: {},
   });
 

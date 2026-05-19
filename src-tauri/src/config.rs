@@ -20,11 +20,17 @@ pub struct TrayConfig {
     pub model_filter: String,
     #[serde(default)]
     pub model_whitelist: Vec<String>,
+    #[serde(default = "default_display_mode")]
+    pub display_mode: String,
+    #[serde(default = "default_average_minutes")]
+    pub average_minutes: u32,
 }
 
 fn default_theme() -> String { "system".into() }
 fn default_items() -> Vec<String> { vec!["out_rate".into(), "in_rate".into(), "ttft".into()] }
 fn default_model_filter() -> String { "last".into() }
+fn default_display_mode() -> String { "last".into() }
+fn default_average_minutes() -> u32 { 5 }
 
 impl Default for TrayConfig {
     fn default() -> Self {
@@ -32,6 +38,8 @@ impl Default for TrayConfig {
             items: default_items(),
             model_filter: default_model_filter(),
             model_whitelist: vec![],
+            display_mode: default_display_mode(),
+            average_minutes: default_average_minutes(),
         }
     }
 }

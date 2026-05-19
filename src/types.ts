@@ -17,8 +17,10 @@ export interface Config {
   theme: Theme;
   tray: {
     items: Metric[];
-    model_filter: "last" | "whitelist" | "all";
+    model_filter: "last" | "whitelist";
     model_whitelist: string[];
+    display_mode: "last" | "average";
+    average_minutes: number;
   };
   model_aliases: Record<string, string>;
 }

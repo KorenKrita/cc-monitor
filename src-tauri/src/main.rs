@@ -92,7 +92,6 @@ fn main() {
                         request.duration_ms,
                     );
 
-                    // Reload config each time to pick up settings changes
                     let current_config = config::load_config();
 
                     // Check model filter
@@ -101,8 +100,21 @@ fn main() {
                         _ => true,
                     };
 
-                    if should_display && request.duration_ms.filter(|&ms| ms > 0).is_some() {
-                        let tray_text = tray::format_tray_text(&request, &current_config.tray);
+                    if should_display {
+                        let tray_text = match current_config.tray.display_mode.as_str() {
+                            "average" => {
+                                let mins = current_config.tray.average_minutes.max(1);
+                                let since = chrono::Utc::now() - chrono::Duration::minutes(mins as i64);
+                                tray::format_average_tray_text(&db_clone, &since.to_rfc3339(), &current_config.tray)
+                            }
+                            _ => {
+                                if request.duration_ms.filter(|&ms| ms > 0).is_some() {
+                                    tray::format_tray_text(&request, &current_config.tray)
+                                } else {
+                                    continue;
+                                }
+                            }
+                        };
                         if let Some(tray) = handle_clone.tray_by_id("main") {
                             let _ = tray.set_title(Some(&tray_text));
                         }
