@@ -9,14 +9,30 @@ pub fn format_tray_text(request: &ParsedRequest, config: &TrayConfig) -> String 
             "out_rate" => parts.push(format!("↓{}", format_tokens(request.output_tokens))),
             "in_rate" => parts.push(format!("↑{}", format_tokens(request.input_tokens))),
             "ttft" => {
-                if let Some(ms) = request.duration_ms {
-                    parts.push(format_duration(ms));
-                }
+                let ms = request.duration_ms.unwrap_or(0);
+                parts.push(format_duration(ms));
             }
             _ => {}
         }
     }
 
+    if parts.is_empty() {
+        "⬡".to_string()
+    } else {
+        format!("⬡ {}", parts.join(" "))
+    }
+}
+
+pub fn format_idle_tray_text(config: &TrayConfig) -> String {
+    let mut parts: Vec<String> = Vec::new();
+    for item in &config.items {
+        match item.as_str() {
+            "out_rate" => parts.push("↓0".to_string()),
+            "in_rate" => parts.push("↑0".to_string()),
+            "ttft" => parts.push("0s".to_string()),
+            _ => {}
+        }
+    }
     if parts.is_empty() {
         "⬡".to_string()
     } else {

@@ -27,9 +27,10 @@ fn main() {
             let db_clone = db.clone();
             let config_clone = config.clone();
 
-            // Create tray
+            // Create tray with idle text
+            let idle_text = tray::format_idle_tray_text(&config.tray);
             let _tray = TrayIconBuilder::new()
-                .title("⬡")
+                .title(&idle_text)
                 .tooltip("CC Monitor")
                 .on_tray_icon_event(move |tray_icon, event| {
                     use tauri::tray::{TrayIconEvent, MouseButton, MouseButtonState};

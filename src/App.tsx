@@ -35,23 +35,26 @@ export default function App() {
   const metricUnit = metric === "ttft" ? "sec" : "tok/req";
 
   return (
-    <div style={{ background: theme.bg, color: theme.foreground, fontFamily: "'Fira Sans', system-ui, sans-serif", padding: 20, height: "100vh", overflow: "hidden" }}>
+    <div style={{ background: theme.bg, color: theme.foreground, fontFamily: "'Fira Sans', system-ui, sans-serif", padding: 20, height: "100vh", overflow: "hidden", position: "relative" }}>
+      {/* Close button - top left red dot */}
+      <button
+        onClick={() => invoke("hide_window")}
+        style={{
+          position: "absolute", top: 10, left: 10,
+          width: 12, height: 12, borderRadius: "50%",
+          background: "#EF4444", border: "none",
+          cursor: "pointer", padding: 0,
+          display: "flex", alignItems: "center", justifyContent: "center",
+          fontSize: 8, color: "transparent", lineHeight: 1,
+        }}
+        onMouseEnter={(e) => { e.currentTarget.style.color = "#7F1D1D"; }}
+        onMouseLeave={(e) => { e.currentTarget.style.color = "transparent"; }}
+        title="Close"
+      >×</button>
+
       <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 14 }}>
         <MetricTabs value={metric} onChange={setMetric} theme={theme} />
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <TimeRangeTabs value={timeRange} onChange={setTimeRange} theme={theme} />
-          <button
-            onClick={() => invoke("hide_window")}
-            style={{
-              width: 20, height: 20, borderRadius: 4,
-              background: "transparent", border: `1px solid ${theme.border}`,
-              color: theme.muted, fontSize: 12, cursor: "pointer",
-              display: "flex", alignItems: "center", justifyContent: "center",
-              lineHeight: 1,
-            }}
-            title="Close"
-          >×</button>
-        </div>
+        <TimeRangeTabs value={timeRange} onChange={setTimeRange} theme={theme} />
       </div>
 
       <div style={{ display: "flex", gap: 14, height: "calc(100% - 50px)" }}>
@@ -68,6 +71,7 @@ export default function App() {
         <Chart
           requests={requests}
           metric={metric}
+          timeRange={timeRange}
           selectedModels={selectedModels}
           models={models}
           theme={theme}

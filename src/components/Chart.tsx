@@ -1,11 +1,12 @@
 import { useMemo } from "react";
 import ReactECharts from "echarts-for-react";
-import { RequestRecord, Metric } from "../types";
+import { RequestRecord, Metric, TimeRange } from "../types";
 import { ThemeTokens, colorPool, getLineStyle, getModelDisplayName } from "../theme";
 
 interface Props {
   requests: RequestRecord[];
   metric: Metric;
+  timeRange: TimeRange;
   selectedModels: string[];
   models: string[];
   theme: ThemeTokens;
@@ -13,7 +14,7 @@ interface Props {
   aliases: Record<string, string>;
 }
 
-export function Chart({ requests, metric, selectedModels, models, theme, isDark, aliases }: Props) {
+export function Chart({ requests, metric, timeRange, selectedModels, models, theme, isDark, aliases }: Props) {
   const colors = isDark ? colorPool.dark : colorPool.light;
 
   const option = useMemo(() => {
@@ -87,7 +88,9 @@ export function Chart({ requests, metric, selectedModels, models, theme, isDark,
         formatter: (params: any[]) => {
           if (!params.length) return "";
           const time = new Date(params[0].value[0]);
-          const timeStr = `${time.getHours().toString().padStart(2, "0")}:${time.getMinutes().toString().padStart(2, "0")}`;
+          const timeStr = timeRange === "1h"
+            ? `${time.getHours().toString().padStart(2, "0")}:${time.getMinutes().toString().padStart(2, "0")}:${time.getSeconds().toString().padStart(2, "0")}`
+            : `${time.getHours().toString().padStart(2, "0")}:${time.getMinutes().toString().padStart(2, "0")}`;
           let html = `<div style="margin-bottom:4px;color:${theme.muted}">${timeStr}</div>`;
           for (const p of params) {
             const val = metric === "ttft"
@@ -102,7 +105,7 @@ export function Chart({ requests, metric, selectedModels, models, theme, isDark,
       },
       series,
     };
-  }, [requests, metric, selectedModels, models, theme, isDark, aliases]);
+  }, [requests, metric, timeRange, selectedModels, models, theme, isDark, aliases]);
 
   return (
     <div style={{ flex: 1, background: theme.card, borderRadius: 8, padding: 8, overflow: "hidden" }}>
