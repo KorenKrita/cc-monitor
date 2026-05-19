@@ -28,22 +28,23 @@ pub struct ModelPrice {
     pub input: f64,       // $/M tokens
     pub output: f64,      // $/M tokens
     pub cache: f64,       // $/M tokens
-    pub source: String,   // "manual" | "litellm" | "new-api"
+    pub source: String,   // "manual" | "litellm" | "models.dev" | "basellm"
 }
 ```
 
 ### 优先级
 
 ```
-用户手动设置 (source: "manual") > 同步拉取 (source: "litellm" | "new-api") > 无价格（不计费）
+用户手动设置 (source: "manual") > 同步拉取 (source: "litellm" | "models.dev" | "basellm") > 无价格（不计费）
 ```
 
 ### 同步源
 
 1. litellm: `https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json`
-2. new-api: `https://raw.githubusercontent.com/songquanpeng/one-api/main/relay/model_ratio.go`（模型倍率表，需解析 Go map 字面量）
+2. models.dev: `https://models.dev/api.json`
+3. basellm: `https://basellm.github.io/llm-metadata/api/newapi/models.json`（模型价格）+ `https://basellm.github.io/llm-metadata/api/newapi/vendors.json`（厂商信息）
 
-注：初始版本先实现 litellm 源（JSON 格式，解析简单）。new-api 源为 Go 代码格式，可后续迭代支持。
+所有源均为 JSON 格式，可直接解析。
 
 同步逻辑：
 - 拉取远程价格数据，解析为 ModelPrice

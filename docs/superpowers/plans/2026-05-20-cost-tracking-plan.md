@@ -1023,6 +1023,8 @@ use std::collections::HashMap;
 use crate::config::ModelPrice;
 
 const LITELLM_URL: &str = "https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json";
+const MODELS_DEV_URL: &str = "https://models.dev/api.json";
+const BASELLM_MODELS_URL: &str = "https://basellm.github.io/llm-metadata/api/newapi/models.json";
 
 pub async fn fetch_litellm_prices() -> Result<HashMap<String, ModelPrice>, String> {
     let resp = reqwest::get(LITELLM_URL).await.map_err(|e| e.to_string())?;
@@ -1058,18 +1060,98 @@ pub async fn fetch_litellm_prices() -> Result<HashMap<String, ModelPrice>, Strin
     Ok(prices)
 }
 
+pub async fn fetch_models_dev_prices() -> Result<HashMap<String, ModelPrice>, String> {
+    let resp = reqwest::get(MODELS_DEV_URL).await.map_err(|e| e.to_string())?;
+    let data: serde_json::Value = resp.json().await.map_err(|e| e.to_string())?;
+
+    let arr = data.as_array().ok_or("Invalid models.dev format")?;
+    let mut prices = HashMap::new();
+
+    for item in arr {
+        let model_name = match item.get("id").and_then(|v| v.as_str()) {
+            Some(n) => n.to_string(),
+            None => continue,
+        };
+        let pricing = match item.get("pricing") {
+            Some(p) => p,
+            None => continue,
+        };
+        let input = pricing.get("input")
+            .and_then(|v| v.as_f64())
+            .unwrap_or(0.0) * 1_000_000.0;
+        let output = pricing.get("output")
+            .and_then(|v| v.as_f64())
+            .unwrap_or(0.0) * 1_000_000.0;
+        let cache = pricing.get("cached_input")
+            .and_then(|v| v.as_f64())
+            .unwrap_or(0.0) * 1_000_000.0;
+
+        if input > 0.0 || output > 0.0 {
+            prices.insert(model_name, ModelPrice {
+                input,
+                output,
+                cache,
+                source: "models.dev".to_string(),
+            });
+        }
+    }
+
+    Ok(prices)
+}
+
+pub async fn fetch_basellm_prices() -> Result<HashMap<String, ModelPrice>, String> {
+    let resp = reqwest::get(BASELLM_MODELS_URL).await.map_err(|e| e.to_string())?;
+    let data: serde_json::Value = resp.json().await.map_err(|e| e.to_string())?;
+
+    let arr = data.as_array().ok_or("Invalid basellm format")?;
+    let mut prices = HashMap::new();
+
+    for item in arr {
+        let model_name = match item.get("model").and_then(|v| v.as_str()) {
+            Some(n) => n.to_string(),
+            None => continue,
+        };
+        let input = item.get("input_price")
+            .and_then(|v| v.as_f64())
+            .unwrap_or(0.0);
+        let output = item.get("output_price")
+            .and_then(|v| v.as_f64())
+            .unwrap_or(0.0);
+
+        if input > 0.0 || output > 0.0 {
+            prices.insert(model_name, ModelPrice {
+                input,
+                output,
+                cache: 0.0,
+                source: "basellm".to_string(),
+            });
+        }
+    }
+
+    Ok(prices)
+}
+
 pub async fn sync_prices(current_prices: &HashMap<String, ModelPrice>) -> Result<HashMap<String, ModelPrice>, String> {
     let mut result = current_prices.clone();
 
-    let fetched = fetch_litellm_prices().await?;
+    // Fetch from all sources, later sources override earlier (except manual)
+    let sources: Vec<(&str, Result<HashMap<String, ModelPrice>, String>)> = vec![
+        ("basellm", fetch_basellm_prices().await),
+        ("models.dev", fetch_models_dev_prices().await),
+        ("litellm", fetch_litellm_prices().await),
+    ];
 
-    for (model, price) in fetched {
-        match result.get(&model) {
-            Some(existing) if existing.source == "manual" => {
-                // Don't overwrite manual prices
-            }
-            _ => {
-                result.insert(model, price);
+    for (_name, fetch_result) in sources {
+        if let Ok(fetched) = fetch_result {
+            for (model, price) in fetched {
+                match result.get(&model) {
+                    Some(existing) if existing.source == "manual" => {
+                        // Don't overwrite manual prices
+                    }
+                    _ => {
+                        result.insert(model, price);
+                    }
+                }
             }
         }
     }
