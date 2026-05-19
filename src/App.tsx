@@ -61,16 +61,17 @@ export default function App() {
           background: "#22C55E", border: "none",
           cursor: "pointer", padding: 0,
           display: "flex", alignItems: "center", justifyContent: "center",
-          fontSize: 9, color: "#064E3B", lineHeight: 1, fontWeight: 700,
+          fontSize: 9, color: "#064E3B", lineHeight: 0, fontWeight: 700,
+          paddingBottom: 1,
         }}
         title="Close"
       >×</button>
 
-      {/* Settings gear - bottom right */}
+      {/* Settings gear - bottom right corner */}
       <button
         onClick={() => setShowSettings(true)}
         style={{
-          position: "absolute", bottom: 12, right: 12,
+          position: "absolute", bottom: 6, right: 6,
           width: 20, height: 20, borderRadius: 4,
           background: "transparent", border: "none",
           color: theme.muted, fontSize: 14, cursor: "pointer",
