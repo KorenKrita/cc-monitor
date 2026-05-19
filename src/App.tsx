@@ -52,7 +52,7 @@ export default function App() {
 
   return (
     <div style={{ background: theme.bg, color: theme.foreground, fontFamily: "'Fira Sans', system-ui, sans-serif", padding: 20, height: "100vh", overflow: "hidden", position: "relative" }}>
-      {/* Close button - top left green dot */}
+      {/* Close button - top left green dot with × */}
       <button
         onClick={() => invoke("hide_window")}
         style={{
@@ -61,10 +61,8 @@ export default function App() {
           background: "#22C55E", border: "none",
           cursor: "pointer", padding: 0,
           display: "flex", alignItems: "center", justifyContent: "center",
-          fontSize: 8, color: "transparent", lineHeight: 1,
+          fontSize: 9, color: "#064E3B", lineHeight: 1, fontWeight: 700,
         }}
-        onMouseEnter={(e) => { e.currentTarget.style.color = "#064E3B"; }}
-        onMouseLeave={(e) => { e.currentTarget.style.color = "transparent"; }}
         title="Close"
       >×</button>
 

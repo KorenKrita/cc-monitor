@@ -33,9 +33,9 @@ pub fn format_tray_text(request: &ParsedRequest, config: &TrayConfig) -> String 
     }
 
     if parts.is_empty() {
-        "—".to_string()
+        "✧".to_string()
     } else {
-        parts.join(" ")
+        format!("✧ {}", parts.join(" "))
     }
 }
 
@@ -50,9 +50,9 @@ pub fn format_idle_tray_text(config: &TrayConfig) -> String {
         }
     }
     if parts.is_empty() {
-        "—".to_string()
+        "✧".to_string()
     } else {
-        parts.join(" ")
+        format!("✧ {}", parts.join(" "))
     }
 }
 
