@@ -18,6 +18,23 @@ pub struct RequestRecord {
     pub source: String,
 }
 
+impl RequestRecord {
+    fn from_row(row: &rusqlite::Row) -> rusqlite::Result<Self> {
+        Ok(Self {
+            id: row.get(0)?,
+            timestamp: row.get(1)?,
+            model: row.get(2)?,
+            input_tokens: row.get(3)?,
+            output_tokens: row.get(4)?,
+            cache_creation_tokens: row.get(5)?,
+            cache_read_tokens: row.get(6)?,
+            duration_ms: row.get(7)?,
+            project: row.get::<_, Option<String>>(8)?.unwrap_or_default(),
+            source: row.get::<_, Option<String>>(9)?.unwrap_or_default(),
+        })
+    }
+}
+
 pub struct Database {
     conn: Mutex<Connection>,
 }
@@ -120,18 +137,7 @@ impl Database {
         let params_ref: Vec<&dyn rusqlite::types::ToSql> = param_values.iter().map(|p| p.as_ref()).collect();
 
         let rows = stmt.query_map(params_ref.as_slice(), |row| {
-            Ok(RequestRecord {
-                id: row.get(0)?,
-                timestamp: row.get(1)?,
-                model: row.get(2)?,
-                input_tokens: row.get(3)?,
-                output_tokens: row.get(4)?,
-                cache_creation_tokens: row.get(5)?,
-                cache_read_tokens: row.get(6)?,
-                duration_ms: row.get(7)?,
-                project: row.get::<_, Option<String>>(8)?.unwrap_or_default(),
-                source: row.get::<_, Option<String>>(9)?.unwrap_or_default(),
-            })
+            RequestRecord::from_row(row)
         }).map_err(|e| e.to_string())?;
 
         rows.collect::<Result<Vec<_>, _>>().map_err(|e| e.to_string())
@@ -144,18 +150,7 @@ impl Database {
         ).map_err(|e| e.to_string())?;
 
         let mut rows = stmt.query_map([], |row| {
-            Ok(RequestRecord {
-                id: row.get(0)?,
-                timestamp: row.get(1)?,
-                model: row.get(2)?,
-                input_tokens: row.get(3)?,
-                output_tokens: row.get(4)?,
-                cache_creation_tokens: row.get(5)?,
-                cache_read_tokens: row.get(6)?,
-                duration_ms: row.get(7)?,
-                project: row.get::<_, Option<String>>(8)?.unwrap_or_default(),
-                source: row.get::<_, Option<String>>(9)?.unwrap_or_default(),
-            })
+            RequestRecord::from_row(row)
         }).map_err(|e| e.to_string())?;
 
         match rows.next() {

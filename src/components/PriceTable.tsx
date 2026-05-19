@@ -98,7 +98,7 @@ export function PriceTable({ config, models, onUpdate, onSyncComplete, theme }: 
                     <input
                       type="number"
                       step="0.01"
-                      value={p.input || ""}
+                      value={p.input ?? ""}
                       onChange={(e) => updatePrice(model, "input", parseFloat(e.target.value) || 0)}
                       style={cellStyle}
                     />
@@ -107,7 +107,7 @@ export function PriceTable({ config, models, onUpdate, onSyncComplete, theme }: 
                     <input
                       type="number"
                       step="0.01"
-                      value={p.output || ""}
+                      value={p.output ?? ""}
                       onChange={(e) => updatePrice(model, "output", parseFloat(e.target.value) || 0)}
                       style={cellStyle}
                     />
@@ -116,7 +116,7 @@ export function PriceTable({ config, models, onUpdate, onSyncComplete, theme }: 
                     <input
                       type="number"
                       step="0.01"
-                      value={p.cache || ""}
+                      value={p.cache ?? ""}
                       onChange={(e) => updatePrice(model, "cache", parseFloat(e.target.value) || 0)}
                       style={cellStyle}
                     />

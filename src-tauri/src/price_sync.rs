@@ -77,12 +77,13 @@ pub async fn fetch_models_dev_prices() -> Result<HashMap<String, ModelPrice>, St
 pub async fn sync_prices(current_prices: &HashMap<String, ModelPrice>) -> Result<HashMap<String, ModelPrice>, String> {
     let mut result = current_prices.clone();
 
-    let sources: Vec<Result<HashMap<String, ModelPrice>, String>> = vec![
-        fetch_models_dev_prices().await,
-        fetch_litellm_prices().await,
-    ];
+    let (models_dev_result, litellm_result) = tokio::join!(
+        fetch_models_dev_prices(),
+        fetch_litellm_prices(),
+    );
 
-    for fetch_result in sources {
+    // Later sources override earlier (litellm > models.dev), but never override manual
+    for fetch_result in [models_dev_result, litellm_result] {
         if let Ok(fetched) = fetch_result {
             for (model, price) in fetched {
                 match result.get(&model) {

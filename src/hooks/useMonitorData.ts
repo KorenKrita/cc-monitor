@@ -25,13 +25,17 @@ export function useMonitorData() {
     invoke<string[]>("get_models").then(setModels).catch(console.error);
     invoke<RequestRecord | null>("get_latest").then((r) => { if (r) setLatest(r); }).catch(console.error);
 
-    // Refresh data when window becomes visible
     const onVisibility = () => {
       if (document.visibilityState === "visible") {
         const { timeRange, modelFilter } = currentRange.current;
         fetchData(timeRange, modelFilter);
-        invoke<string[]>("get_models").then(setModels).catch(console.error);
-        invoke<RequestRecord | null>("get_latest").then((r) => { if (r) setLatest(r); }).catch(console.error);
+        Promise.all([
+          invoke<string[]>("get_models"),
+          invoke<RequestRecord | null>("get_latest"),
+        ]).then(([m, r]) => {
+          setModels(m);
+          if (r) setLatest(r);
+        }).catch(console.error);
       }
     };
     document.addEventListener("visibilitychange", onVisibility);

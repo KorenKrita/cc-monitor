@@ -65,7 +65,7 @@ export default function App() {
 
   return (
     <div style={{ background: theme.bg, color: theme.foreground, fontFamily: "'Fira Sans', system-ui, sans-serif", padding: 20, height: "100vh", overflow: "hidden", position: "relative" }}>
-      {/* Close button - top left green dot with × */}
+      {/* Close */}
       <button
         onClick={() => invoke("hide_window")}
         style={{

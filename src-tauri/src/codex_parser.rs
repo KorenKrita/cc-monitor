@@ -3,6 +3,7 @@ use std::sync::Mutex;
 
 use crate::parser::ParsedRequest;
 
+#[derive(Default)]
 struct CodexSessionState {
     cwd: String,
     model: String,
@@ -27,21 +28,18 @@ impl CodexSessionTracker {
             "session_meta" => {
                 let cwd = value.get("cwd")?.as_str()?.to_string();
                 let mut state = self.session_state.lock().ok()?;
-                let entry = state.entry(file_id.to_string()).or_insert(CodexSessionState {
-                    cwd: String::new(),
-                    model: String::new(),
-                });
-                entry.cwd = cwd;
+                state.entry(file_id.to_string()).or_default().cwd = cwd;
+                if state.len() > 200 {
+                    if let Some(oldest) = state.keys().next().cloned() {
+                        state.remove(&oldest);
+                    }
+                }
                 None
             }
             "turn_context" => {
                 if let Some(model) = value.get("model").and_then(|m| m.as_str()) {
                     let mut state = self.session_state.lock().ok()?;
-                    let entry = state.entry(file_id.to_string()).or_insert(CodexSessionState {
-                        cwd: String::new(),
-                        model: String::new(),
-                    });
-                    entry.model = model.to_string();
+                    state.entry(file_id.to_string()).or_default().model = model.to_string();
                 }
                 None
             }

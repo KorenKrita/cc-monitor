@@ -11,6 +11,13 @@ pub fn format_cost(amount: f64) -> String {
     }
 }
 
+fn format_cost_item(cost: Option<f64>) -> String {
+    match cost {
+        Some(c) => format_cost(c),
+        None => "$—".to_string(),
+    }
+}
+
 pub fn calculate_cost_since(time_window: &str) -> String {
     let now = chrono::Utc::now();
     match time_window {
@@ -48,11 +55,7 @@ pub fn format_tray_text(request: &ParsedRequest, config: &TrayConfig, cost: Opti
                 }
             }
             "cost" => {
-                if let Some(c) = cost {
-                    parts.push(format_cost(c));
-                } else {
-                    parts.push("$—".to_string());
-                }
+                parts.push(format_cost_item(cost));
             }
             _ => {}
         }
@@ -73,11 +76,7 @@ pub fn format_idle_tray_text(config: &TrayConfig, cost: Option<f64>) -> String {
             "in_rate" => parts.push("↑—".to_string()),
             "ttft" => parts.push("⏱—".to_string()),
             "cost" => {
-                if let Some(c) = cost {
-                    parts.push(format_cost(c));
-                } else {
-                    parts.push("$—".to_string());
-                }
+                parts.push(format_cost_item(cost));
             }
             _ => {}
         }
@@ -133,11 +132,7 @@ pub fn format_average_tray_text(db: &Arc<Database>, since: &str, config: &TrayCo
             "in_rate" => parts.push(format!("↑{}", format_rate(avg_in_rate))),
             "ttft" => parts.push(format!("⏱{}", format_duration(avg_duration_ms))),
             "cost" => {
-                if let Some(c) = cost {
-                    parts.push(format_cost(c));
-                } else {
-                    parts.push("$—".to_string());
-                }
+                parts.push(format_cost_item(cost));
             }
             _ => {}
         }
