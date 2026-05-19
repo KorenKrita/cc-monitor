@@ -9,6 +9,11 @@ struct CodexSessionState {
     model: String,
 }
 
+// Encode cwd path to match Claude's project format: /Users/foo/bar → -Users-foo-bar
+fn encode_cwd_as_project(cwd: &str) -> String {
+    cwd.replace('/', "-")
+}
+
 pub struct CodexSessionTracker {
     session_state: Mutex<HashMap<String, CodexSessionState>>,
 }
@@ -69,7 +74,7 @@ impl CodexSessionTracker {
                     cache_creation_tokens: 0,
                     cache_read_tokens: cached_input,
                     duration_ms: None,
-                    project: session.cwd.clone(),
+                    project: encode_cwd_as_project(&session.cwd),
                     source: "codex".to_string(),
                 })
             }
@@ -104,7 +109,7 @@ mod tests {
         assert_eq!(result.input_tokens, 2000);
         assert_eq!(result.output_tokens, 1200);
         assert_eq!(result.cache_read_tokens, 500);
-        assert_eq!(result.project, "/Users/test/project");
+        assert_eq!(result.project, "-Users-test-project");
         assert_eq!(result.source, "codex");
     }
 
@@ -131,10 +136,17 @@ mod tests {
 
         let r1 = tracker.parse_line(event, "f1").unwrap();
         assert_eq!(r1.model, "gpt-4o");
-        assert_eq!(r1.project, "/project-a");
+        assert_eq!(r1.project, "-project-a");
 
         let r2 = tracker.parse_line(event, "f2").unwrap();
         assert_eq!(r2.model, "o3");
-        assert_eq!(r2.project, "/project-b");
+        assert_eq!(r2.project, "-project-b");
+    }
+
+    #[test]
+    fn test_encode_cwd_as_project() {
+        assert_eq!(encode_cwd_as_project("/Users/foo/bar"), "-Users-foo-bar");
+        assert_eq!(encode_cwd_as_project("/tmp"), "-tmp");
+        assert_eq!(encode_cwd_as_project(""), "");
     }
 }

@@ -34,12 +34,31 @@ pub fn get_config() -> Result<Config, String> {
 pub fn set_config(app: AppHandle, state: State<AppState>, config: Config) -> Result<(), String> {
     save_config(&config)?;
 
-    if let Ok(Some(record)) = state.db.get_latest() {
+    let cost = if config.tray.items.contains(&"cost".to_string()) {
+        let since = tray::calculate_cost_since(&config.cost.time_window);
+        state.db.calculate_cost(
+            &since,
+            &config.cost.project_whitelist,
+            &config.cost.model_whitelist,
+            &config.cost.model_prices,
+        ).ok()
+    } else {
+        None
+    };
+
+    let tray_text = if config.tray.display_mode == "average" {
+        let mins = config.tray.average_minutes.max(1);
+        let since = chrono::Utc::now() - chrono::Duration::minutes(mins as i64);
+        tray::format_average_tray_text(&state.db, &since.to_rfc3339(), &config.tray, cost)
+    } else if let Ok(Some(record)) = state.db.get_latest() {
         let req: ParsedRequest = record.into();
-        let tray_text = tray::format_tray_text(&req, &config.tray, None);
-        if let Some(tray) = app.tray_by_id("main") {
-            let _ = tray.set_title(Some(&tray_text));
-        }
+        tray::format_tray_text(&req, &config.tray, cost)
+    } else {
+        tray::format_idle_tray_text(&config.tray, cost)
+    };
+
+    if let Some(tray) = app.tray_by_id("main") {
+        let _ = tray.set_title(Some(&tray_text));
     }
     Ok(())
 }

@@ -36,12 +36,31 @@ fn main() {
             let db_clone = db.clone();
 
             // Create tray with hexagon icon + text
-            let initial_text = match db.get_latest() {
-                Ok(Some(record)) => {
-                    let req: parser::ParsedRequest = record.into();
-                    tray::format_tray_text(&req, &config.tray, None)
+            let initial_cost = if config.tray.items.contains(&"cost".to_string()) {
+                let since = tray::calculate_cost_since(&config.cost.time_window);
+                db.calculate_cost(
+                    &since,
+                    &config.cost.project_whitelist,
+                    &config.cost.model_whitelist,
+                    &config.cost.model_prices,
+                ).ok()
+            } else {
+                None
+            };
+
+            let initial_text = match config.tray.display_mode.as_str() {
+                "average" => {
+                    let mins = config.tray.average_minutes.max(1);
+                    let since = chrono::Utc::now() - chrono::Duration::minutes(mins as i64);
+                    tray::format_average_tray_text(&db, &since.to_rfc3339(), &config.tray, initial_cost)
                 }
-                _ => tray::format_idle_tray_text(&config.tray, None),
+                _ => match db.get_latest() {
+                    Ok(Some(record)) => {
+                        let req: parser::ParsedRequest = record.into();
+                        tray::format_tray_text(&req, &config.tray, initial_cost)
+                    }
+                    _ => tray::format_idle_tray_text(&config.tray, initial_cost),
+                },
             };
             let icon = tauri::image::Image::new_owned(vec![0,0,0,0], 1, 1);
             let tray = TrayIconBuilder::with_id("main")
