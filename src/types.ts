@@ -7,11 +7,31 @@ export interface RequestRecord {
   cache_creation_tokens: number;
   cache_read_tokens: number;
   duration_ms: number | null;
+  project: string;
+  source: string;
 }
 
-export type Metric = "out_rate" | "in_rate" | "ttft";
+export type Metric = "out_rate" | "in_rate" | "ttft" | "cost";
 export type TimeRange = "1h" | "today" | "yesterday";
 export type Theme = "system" | "dark" | "light";
+export type CostTimeWindow = "day" | "month" | "year" | "all";
+export type WatchSource = "claude" | "codex";
+
+export interface ModelPrice {
+  input: number;
+  output: number;
+  cache: number;
+  source: string;
+}
+
+export interface CostConfig {
+  time_window: CostTimeWindow;
+  project_whitelist: string[];
+  model_whitelist: string[];
+  model_prices: Record<string, ModelPrice>;
+  last_sync_time: string | null;
+  watch_sources: WatchSource[];
+}
 
 export interface Config {
   theme: Theme;
@@ -23,4 +43,5 @@ export interface Config {
     average_minutes: number;
   };
   model_aliases: Record<string, string>;
+  cost: CostConfig;
 }

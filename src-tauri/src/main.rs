@@ -6,10 +6,12 @@ use tauri::{
 };
 use tokio::sync::mpsc;
 
+mod codex_parser;
 mod commands;
 mod config;
 mod db;
 mod parser;
+mod price_sync;
 mod tray;
 mod watcher;
 
@@ -37,9 +39,9 @@ fn main() {
             let initial_text = match db.get_latest() {
                 Ok(Some(record)) => {
                     let req: parser::ParsedRequest = record.into();
-                    tray::format_tray_text(&req, &config.tray)
+                    tray::format_tray_text(&req, &config.tray, None)
                 }
-                _ => tray::format_idle_tray_text(&config.tray),
+                _ => tray::format_idle_tray_text(&config.tray, None),
             };
             let icon = tauri::image::Image::new_owned(vec![0,0,0,0], 1, 1);
             let tray = TrayIconBuilder::with_id("main")
@@ -102,6 +104,8 @@ fn main() {
                         request.cache_creation_tokens,
                         request.cache_read_tokens,
                         request.duration_ms,
+                        &request.project,
+                        &request.source,
                     );
 
                     let _ = handle_clone.emit("new-request", &request);
@@ -123,15 +127,27 @@ fn main() {
                         continue;
                     }
 
+                    let cost = if current_config.tray.items.contains(&"cost".to_string()) {
+                        let since = tray::calculate_cost_since(&current_config.cost.time_window);
+                        db_clone.calculate_cost(
+                            &since,
+                            &current_config.cost.project_whitelist,
+                            &current_config.cost.model_whitelist,
+                            &current_config.cost.model_prices,
+                        ).ok()
+                    } else {
+                        None
+                    };
+
                     let tray_text = match current_config.tray.display_mode.as_str() {
                         "average" => {
                             let mins = current_config.tray.average_minutes.max(1);
                             let since = chrono::Utc::now() - chrono::Duration::minutes(mins as i64);
-                            tray::format_average_tray_text(&db_clone, &since.to_rfc3339(), &current_config.tray)
+                            tray::format_average_tray_text(&db_clone, &since.to_rfc3339(), &current_config.tray, cost)
                         }
                         _ => {
                             if request.duration_ms.filter(|&ms| ms > 0).is_some() {
-                                tray::format_tray_text(&request, &current_config.tray)
+                                tray::format_tray_text(&request, &current_config.tray, cost)
                             } else {
                                 continue;
                             }
@@ -153,6 +169,11 @@ fn main() {
             commands::set_config,
             commands::hide_window,
             commands::quit_app,
+            commands::get_cost,
+            commands::sync_prices,
+            commands::delete_model_data,
+            commands::delete_all_data,
+            commands::get_projects,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

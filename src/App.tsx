@@ -43,6 +43,7 @@ export default function App() {
       case "out_rate": return durationS ? `${Math.round(latest.output_tokens / durationS)}` : "—";
       case "in_rate": return durationS ? `${Math.round(latest.input_tokens / durationS)}` : "—";
       case "ttft": return durationS ? `${durationS.toFixed(1)}s` : "—";
+      default: return "—";
     }
   };
 
@@ -53,6 +54,7 @@ export default function App() {
       <div style={{ background: theme.bg, color: theme.foreground, fontFamily: "'Fira Sans', system-ui, sans-serif", height: "100vh", overflow: "hidden", position: "relative" }}>
         <Settings
           config={config}
+          models={models}
           onSave={(c) => { setConfig(c); setShowSettings(false); }}
           onClose={() => setShowSettings(false)}
           theme={theme}

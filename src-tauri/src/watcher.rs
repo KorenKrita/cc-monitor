@@ -6,86 +6,143 @@ use std::sync::Arc;
 use std::time::Duration;
 use tokio::sync::mpsc;
 
+use crate::codex_parser::CodexSessionTracker;
+use crate::config::load_config;
 use crate::parser::{ParsedRequest, SessionTracker};
 
 pub fn start_polling(tx: mpsc::UnboundedSender<ParsedRequest>) {
     std::thread::spawn(move || {
-        let claude_dir = match dirs::home_dir() {
-            Some(h) => h.join(".claude").join("projects"),
-            None => return,
-        };
-        if !claude_dir.exists() { return; }
+        let claude_dir = dirs::home_dir().map(|h| h.join(".claude").join("projects"));
+        let codex_dir = dirs::home_dir().map(|h| h.join(".codex").join("sessions"));
 
         let tracker = Arc::new(SessionTracker::new());
+        let codex_tracker = Arc::new(CodexSessionTracker::new());
         let mut file_positions: HashMap<PathBuf, u64> = HashMap::new();
 
-        if let Ok(files) = glob_jsonl_files(&claude_dir) {
-            for path in &files {
-                if let Ok(meta) = std::fs::metadata(path) {
-                    file_positions.insert(path.clone(), meta.len());
+        let config = load_config();
+        let watch_sources = config.cost.watch_sources.clone();
+
+        if watch_sources.is_empty() || watch_sources.contains(&"claude".to_string()) {
+            if let Some(ref dir) = claude_dir {
+                if dir.exists() {
+                    if let Ok(files) = glob_jsonl_files(dir) {
+                        for path in &files {
+                            if let Ok(meta) = std::fs::metadata(path) {
+                                file_positions.insert(path.clone(), meta.len());
+                            }
+                        }
+                        let mut recent: Vec<_> = files.iter()
+                            .filter_map(|p| std::fs::metadata(p).ok().map(|m| (p, m.modified().ok())))
+                            .filter_map(|(p, t)| t.map(|t| (p, t)))
+                            .collect();
+                        recent.sort_by(|a, b| b.1.cmp(&a.1));
+                        for (path, _) in recent.iter().take(5) {
+                            seed_last_user_timestamp(path, &tracker);
+                        }
+                    }
                 }
             }
-            let mut recent: Vec<_> = files.iter()
-                .filter_map(|p| std::fs::metadata(p).ok().map(|m| (p, m.modified().ok())))
-                .filter_map(|(p, t)| t.map(|t| (p, t)))
-                .collect();
-            recent.sort_by(|a, b| b.1.cmp(&a.1));
-            for (path, _) in recent.iter().take(5) {
-                seed_last_user_timestamp(path, &tracker);
+        }
+
+        if watch_sources.is_empty() || watch_sources.contains(&"codex".to_string()) {
+            if let Some(ref dir) = codex_dir {
+                if dir.exists() {
+                    if let Ok(files) = glob_jsonl_files(dir) {
+                        for path in &files {
+                            if let Ok(meta) = std::fs::metadata(path) {
+                                file_positions.insert(path.clone(), meta.len());
+                            }
+                        }
+                    }
+                }
             }
         }
 
         loop {
             std::thread::sleep(Duration::from_millis(500));
 
-            let files = match glob_jsonl_files(&claude_dir) {
-                Ok(f) => f,
-                Err(_) => continue,
-            };
+            let config = load_config();
+            let watch_sources = &config.cost.watch_sources;
 
-            for path in &files {
-                let meta = match std::fs::metadata(path) {
-                    Ok(m) => m,
-                    Err(_) => continue,
-                };
-
-                let current_len = meta.len();
-                let last_pos = file_positions.get(path).copied().unwrap_or(0);
-
-                if current_len < last_pos {
-                    file_positions.insert(path.clone(), 0);
-                    continue;
-                }
-                if current_len == last_pos {
-                    continue;
-                }
-
-                if let Ok(file) = File::open(path) {
-                    let mut reader = BufReader::new(file);
-                    if reader.seek(SeekFrom::Start(last_pos)).is_ok() {
-                        let mut line = String::new();
-                        loop {
-                            line.clear();
-                            match reader.read_line(&mut line) {
-                                Ok(0) => break,
-                                Ok(_) => {
-                                    let trimmed = line.trim();
-                                    if !trimmed.is_empty() {
-                                        if let Some(request) = tracker.parse_line(trimmed) {
-                                            let _ = tx.send(request);
-                                        }
+            if watch_sources.is_empty() || watch_sources.contains(&"claude".to_string()) {
+                if let Some(ref dir) = claude_dir {
+                    if dir.exists() {
+                        if let Ok(files) = glob_jsonl_files(dir) {
+                            for path in &files {
+                                process_file(path, &mut file_positions, |line| {
+                                    if let Some(mut req) = tracker.parse_line(line) {
+                                        req.project = crate::parser::extract_project_from_claude_path(path);
+                                        req.source = "claude".to_string();
+                                        let _ = tx.send(req);
                                     }
-                                }
-                                Err(_) => break,
+                                });
                             }
                         }
                     }
                 }
+            }
 
-                file_positions.insert(path.clone(), current_len);
+            if watch_sources.is_empty() || watch_sources.contains(&"codex".to_string()) {
+                if let Some(ref dir) = codex_dir {
+                    if dir.exists() {
+                        if let Ok(files) = glob_jsonl_files(dir) {
+                            for path in &files {
+                                let file_id = path.to_string_lossy().to_string();
+                                process_file(path, &mut file_positions, |line| {
+                                    if let Some(req) = codex_tracker.parse_line(line, &file_id) {
+                                        let _ = tx.send(req);
+                                    }
+                                });
+                            }
+                        }
+                    }
+                }
             }
         }
     });
+}
+
+fn process_file<F>(path: &PathBuf, positions: &mut HashMap<PathBuf, u64>, mut handler: F)
+where
+    F: FnMut(&str),
+{
+    let meta = match std::fs::metadata(path) {
+        Ok(m) => m,
+        Err(_) => return,
+    };
+
+    let current_len = meta.len();
+    let last_pos = positions.get(path).copied().unwrap_or(0);
+
+    if current_len < last_pos {
+        positions.insert(path.clone(), 0);
+        return;
+    }
+    if current_len == last_pos {
+        return;
+    }
+
+    if let Ok(file) = File::open(path) {
+        let mut reader = BufReader::new(file);
+        if reader.seek(SeekFrom::Start(last_pos)).is_ok() {
+            let mut line = String::new();
+            loop {
+                line.clear();
+                match reader.read_line(&mut line) {
+                    Ok(0) => break,
+                    Ok(_) => {
+                        let trimmed = line.trim();
+                        if !trimmed.is_empty() {
+                            handler(trimmed);
+                        }
+                    }
+                    Err(_) => break,
+                }
+            }
+        }
+    }
+
+    positions.insert(path.clone(), current_len);
 }
 
 fn glob_jsonl_files(dir: &Path) -> Result<Vec<PathBuf>, std::io::Error> {

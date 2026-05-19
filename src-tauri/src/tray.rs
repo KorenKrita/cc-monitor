@@ -3,7 +3,26 @@ use crate::db::Database;
 use crate::parser::ParsedRequest;
 use std::sync::Arc;
 
-pub fn format_tray_text(request: &ParsedRequest, config: &TrayConfig) -> String {
+pub fn format_cost(amount: f64) -> String {
+    if amount >= 1000.0 {
+        format!("${:.1}k", amount / 1000.0)
+    } else {
+        format!("${:.2}", amount)
+    }
+}
+
+pub fn calculate_cost_since(time_window: &str) -> String {
+    let now = chrono::Utc::now();
+    match time_window {
+        "day" => (now - chrono::Duration::days(1)).to_rfc3339(),
+        "month" => (now - chrono::Duration::days(30)).to_rfc3339(),
+        "year" => (now - chrono::Duration::days(365)).to_rfc3339(),
+        "all" => "1970-01-01T00:00:00Z".to_string(),
+        _ => (now - chrono::Duration::days(1)).to_rfc3339(),
+    }
+}
+
+pub fn format_tray_text(request: &ParsedRequest, config: &TrayConfig, cost: Option<f64>) -> String {
     let mut parts: Vec<String> = Vec::new();
     let duration_s = request.duration_ms.filter(|&ms| ms > 0).map(|ms| ms as f64 / 1000.0);
 
@@ -28,6 +47,13 @@ pub fn format_tray_text(request: &ParsedRequest, config: &TrayConfig) -> String 
                     parts.push("⏱—".to_string());
                 }
             }
+            "cost" => {
+                if let Some(c) = cost {
+                    parts.push(format_cost(c));
+                } else {
+                    parts.push("$—".to_string());
+                }
+            }
             _ => {}
         }
     }
@@ -39,13 +65,20 @@ pub fn format_tray_text(request: &ParsedRequest, config: &TrayConfig) -> String 
     }
 }
 
-pub fn format_idle_tray_text(config: &TrayConfig) -> String {
+pub fn format_idle_tray_text(config: &TrayConfig, cost: Option<f64>) -> String {
     let mut parts: Vec<String> = Vec::new();
     for item in &config.items {
         match item.as_str() {
             "out_rate" => parts.push("↓—".to_string()),
             "in_rate" => parts.push("↑—".to_string()),
             "ttft" => parts.push("⏱—".to_string()),
+            "cost" => {
+                if let Some(c) = cost {
+                    parts.push(format_cost(c));
+                } else {
+                    parts.push("$—".to_string());
+                }
+            }
             _ => {}
         }
     }
@@ -74,15 +107,15 @@ fn format_duration(ms: i64) -> String {
     }
 }
 
-pub fn format_average_tray_text(db: &Arc<Database>, since: &str, config: &TrayConfig) -> String {
+pub fn format_average_tray_text(db: &Arc<Database>, since: &str, config: &TrayConfig, cost: Option<f64>) -> String {
     let records = match db.query_requests(since, None, None) {
         Ok(r) => r,
-        Err(_) => return format_idle_tray_text(config),
+        Err(_) => return format_idle_tray_text(config, cost),
     };
 
     let valid: Vec<_> = records.iter().filter(|r| r.duration_ms.map_or(false, |ms| ms > 0)).collect();
     if valid.is_empty() {
-        return format_idle_tray_text(config);
+        return format_idle_tray_text(config, cost);
     }
 
     let total_out: i64 = valid.iter().map(|r| r.output_tokens).sum();
@@ -99,6 +132,13 @@ pub fn format_average_tray_text(db: &Arc<Database>, since: &str, config: &TrayCo
             "out_rate" => parts.push(format!("↓{}", format_rate(avg_out_rate))),
             "in_rate" => parts.push(format!("↑{}", format_rate(avg_in_rate))),
             "ttft" => parts.push(format!("⏱{}", format_duration(avg_duration_ms))),
+            "cost" => {
+                if let Some(c) = cost {
+                    parts.push(format_cost(c));
+                } else {
+                    parts.push("$—".to_string());
+                }
+            }
             _ => {}
         }
     }

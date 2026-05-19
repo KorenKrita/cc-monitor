@@ -35,6 +35,8 @@ pub struct ParsedRequest {
     pub cache_creation_tokens: i64,
     pub cache_read_tokens: i64,
     pub duration_ms: Option<i64>,
+    pub project: String,
+    pub source: String,
 }
 
 pub struct SessionTracker {
@@ -95,6 +97,8 @@ impl SessionTracker {
             cache_creation_tokens: usage.cache_creation_input_tokens.unwrap_or(0),
             cache_read_tokens: usage.cache_read_input_tokens.unwrap_or(0),
             duration_ms,
+            project: String::new(),
+            source: String::new(),
         })
     }
 }
@@ -109,6 +113,26 @@ impl From<crate::db::RequestRecord> for ParsedRequest {
             cache_creation_tokens: r.cache_creation_tokens,
             cache_read_tokens: r.cache_read_tokens,
             duration_ms: r.duration_ms,
+            project: r.project,
+            source: r.source,
         }
     }
+}
+
+pub fn extract_project_from_claude_path(path: &std::path::Path) -> String {
+    for ancestor in path.ancestors() {
+        if let Some(parent) = ancestor.parent() {
+            if parent.file_name().map_or(false, |n| n == "projects") {
+                if let Some(gp) = parent.parent() {
+                    if gp.file_name().map_or(false, |n| n == ".claude") {
+                        return ancestor.file_name()
+                            .unwrap_or_default()
+                            .to_string_lossy()
+                            .to_string();
+                    }
+                }
+            }
+        }
+    }
+    String::new()
 }

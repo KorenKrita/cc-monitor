@@ -1,6 +1,53 @@
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 use std::fs;
 use std::path::PathBuf;
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ModelPrice {
+    #[serde(default)]
+    pub input: f64,
+    #[serde(default)]
+    pub output: f64,
+    #[serde(default)]
+    pub cache: f64,
+    #[serde(default = "default_price_source")]
+    pub source: String,
+}
+
+fn default_price_source() -> String { "manual".into() }
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CostConfig {
+    #[serde(default = "default_time_window")]
+    pub time_window: String,
+    #[serde(default)]
+    pub project_whitelist: Vec<String>,
+    #[serde(default)]
+    pub model_whitelist: Vec<String>,
+    #[serde(default)]
+    pub model_prices: HashMap<String, ModelPrice>,
+    #[serde(default)]
+    pub last_sync_time: Option<String>,
+    #[serde(default = "default_watch_sources")]
+    pub watch_sources: Vec<String>,
+}
+
+fn default_time_window() -> String { "day".into() }
+fn default_watch_sources() -> Vec<String> { vec!["claude".into(), "codex".into()] }
+
+impl Default for CostConfig {
+    fn default() -> Self {
+        Self {
+            time_window: default_time_window(),
+            project_whitelist: vec![],
+            model_whitelist: vec![],
+            model_prices: HashMap::new(),
+            last_sync_time: None,
+            watch_sources: default_watch_sources(),
+        }
+    }
+}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Config {
@@ -9,7 +56,9 @@ pub struct Config {
     #[serde(default)]
     pub tray: TrayConfig,
     #[serde(default)]
-    pub model_aliases: std::collections::HashMap<String, String>,
+    pub model_aliases: HashMap<String, String>,
+    #[serde(default)]
+    pub cost: CostConfig,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -46,7 +95,12 @@ impl Default for TrayConfig {
 
 impl Default for Config {
     fn default() -> Self {
-        Self { theme: default_theme(), tray: TrayConfig::default(), model_aliases: std::collections::HashMap::new() }
+        Self {
+            theme: default_theme(),
+            tray: TrayConfig::default(),
+            model_aliases: HashMap::new(),
+            cost: CostConfig::default(),
+        }
     }
 }
 

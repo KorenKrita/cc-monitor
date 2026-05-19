@@ -163,6 +163,8 @@ function getValue(record: RequestRecord, metric: Metric): number | null {
       return Math.round(record.input_tokens / durationS);
     case "ttft":
       return durationS ? record.duration_ms : null;
+    default:
+      return null;
   }
 }
 

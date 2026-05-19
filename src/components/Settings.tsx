@@ -1,16 +1,19 @@
 import { useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
-import { Config, Theme, Metric } from "../types";
+import { Config, Theme, Metric, CostTimeWindow, WatchSource } from "../types";
 import { ThemeTokens } from "../theme";
+import { PriceTable } from "./PriceTable";
+import { DataManagement } from "./DataManagement";
 
 interface Props {
   config: Config;
+  models: string[];
   onSave: (config: Config) => void;
   onClose: () => void;
   theme: ThemeTokens;
 }
 
-export function Settings({ config, onSave, onClose, theme }: Props) {
+export function Settings({ config, models, onSave, onClose, theme }: Props) {
   const [draft, setDraft] = useState<Config>(structuredClone(config));
 
   const save = async () => {
@@ -60,6 +63,15 @@ export function Settings({ config, onSave, onClose, theme }: Props) {
 
   const addAlias = () => {
     setDraft({ ...draft, model_aliases: { ...draft.model_aliases, "": "" } });
+  };
+
+  const metricLabel = (item: Metric) => {
+    switch (item) {
+      case "out_rate": return "↓ Out Rate";
+      case "in_rate": return "↑ In Rate";
+      case "ttft": return "⏱ TTFT";
+      case "cost": return "$ Cost";
+    }
   };
 
   const inputStyle = {
@@ -173,7 +185,7 @@ export function Settings({ config, onSave, onClose, theme }: Props) {
                   style={{ accentColor: theme.accentGreen }}
                 />
                 <span style={{ fontSize: 11, flex: 1 }}>
-                  {item === "out_rate" ? "↓ Out Rate" : item === "in_rate" ? "↑ In Rate" : "⏱ TTFT"}
+                  {metricLabel(item)}
                 </span>
                 <button
                   onClick={() => moveItem(idx, -1)}
@@ -188,7 +200,7 @@ export function Settings({ config, onSave, onClose, theme }: Props) {
               </div>
             ))}
             {/* Show unchecked items */}
-            {(["out_rate", "in_rate", "ttft"] as Metric[]).filter((m) => !draft.tray.items.includes(m)).map((item) => (
+            {(["out_rate", "in_rate", "ttft", "cost"] as Metric[]).filter((m) => !draft.tray.items.includes(m)).map((item) => (
               <div key={item} style={{ display: "flex", alignItems: "center", gap: 6, opacity: 0.5 }}>
                 <input
                   type="checkbox"
@@ -197,7 +209,7 @@ export function Settings({ config, onSave, onClose, theme }: Props) {
                   style={{ accentColor: theme.accentGreen }}
                 />
                 <span style={{ fontSize: 11 }}>
-                  {item === "out_rate" ? "↓ Out Rate" : item === "in_rate" ? "↑ In Rate" : "⏱ TTFT"}
+                  {metricLabel(item)}
                 </span>
               </div>
             ))}
@@ -243,6 +255,76 @@ export function Settings({ config, onSave, onClose, theme }: Props) {
             ))}
           </div>
         </div>
+
+        {/* Cost — Time Window */}
+        <div>
+          <div style={labelStyle}>Cost — Time Window</div>
+          <select
+            value={draft.cost.time_window}
+            onChange={(e) => setDraft({ ...draft, cost: { ...draft.cost, time_window: e.target.value as CostTimeWindow } })}
+            style={selectStyle}
+          >
+            <option value="day">Day</option>
+            <option value="month">Month</option>
+            <option value="year">Year</option>
+            <option value="all">All Time</option>
+          </select>
+        </div>
+
+        {/* Watch Sources */}
+        <div>
+          <div style={labelStyle}>Watch Sources</div>
+          <div style={{ display: "flex", gap: 12 }}>
+            {(["claude", "codex"] as const).map((src) => (
+              <label key={src} style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 11 }}>
+                <input
+                  type="checkbox"
+                  checked={draft.cost.watch_sources.includes(src)}
+                  onChange={(e) => {
+                    const sources: WatchSource[] = e.target.checked
+                      ? [...draft.cost.watch_sources, src]
+                      : draft.cost.watch_sources.filter((s) => s !== src);
+                    setDraft({ ...draft, cost: { ...draft.cost, watch_sources: sources } });
+                  }}
+                  style={{ accentColor: theme.accentGreen }}
+                />
+                {src === "claude" ? "Claude Code" : "Codex CLI"}
+              </label>
+            ))}
+          </div>
+          <div style={{ fontSize: 9, color: theme.muted, marginTop: 3 }}>
+            Which session logs to monitor. Both enabled by default.
+          </div>
+        </div>
+
+        {/* Cost Project Whitelist */}
+        <div>
+          <div style={labelStyle}>Cost — Project Whitelist</div>
+          <textarea
+            value={draft.cost.project_whitelist.join("\n")}
+            onChange={(e) => {
+              const list = e.target.value.split("\n").map((s) => s.trim()).filter(Boolean);
+              setDraft({ ...draft, cost: { ...draft.cost, project_whitelist: list } });
+            }}
+            placeholder="Leave empty for all projects"
+            style={{ ...inputStyle, height: 50, resize: "vertical" as const, fontFamily: "'Fira Code', monospace" }}
+          />
+          <div style={{ fontSize: 9, color: theme.muted, marginTop: 3 }}>
+            One project per line. Empty = all projects counted.
+          </div>
+        </div>
+
+        {/* Model Prices */}
+        <PriceTable
+          config={draft}
+          models={models}
+          onUpdate={(prices) => setDraft({ ...draft, cost: { ...draft.cost, model_prices: prices } })}
+          onSyncComplete={(newConfig) => setDraft(newConfig)}
+          theme={theme}
+        />
+
+        {/* Data Management */}
+        <DataManagement models={models} theme={theme} />
       </div>
 
       {/* Footer buttons */}

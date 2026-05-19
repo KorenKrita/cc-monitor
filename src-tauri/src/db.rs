@@ -14,6 +14,8 @@ pub struct RequestRecord {
     pub cache_creation_tokens: i64,
     pub cache_read_tokens: i64,
     pub duration_ms: Option<i64>,
+    pub project: String,
+    pub source: String,
 }
 
 pub struct Database {
@@ -43,6 +45,11 @@ impl Database {
             CREATE INDEX IF NOT EXISTS idx_model ON requests(model);"
         ).map_err(|e| e.to_string())?;
 
+        let _ = conn.execute("ALTER TABLE requests ADD COLUMN project TEXT DEFAULT ''", []);
+        let _ = conn.execute("ALTER TABLE requests ADD COLUMN source TEXT DEFAULT 'claude'", []);
+        let _ = conn.execute("CREATE INDEX IF NOT EXISTS idx_project ON requests(project)", []);
+        let _ = conn.execute("CREATE INDEX IF NOT EXISTS idx_source ON requests(source)", []);
+
         Ok(Self { conn: Mutex::new(conn) })
     }
 
@@ -55,19 +62,21 @@ impl Database {
         cache_creation_tokens: i64,
         cache_read_tokens: i64,
         duration_ms: Option<i64>,
+        project: &str,
+        source: &str,
     ) -> Result<i64, String> {
         let conn = self.conn.lock().map_err(|e| e.to_string())?;
         conn.execute(
-            "INSERT INTO requests (timestamp, model, input_tokens, output_tokens, cache_creation_tokens, cache_read_tokens, duration_ms)
-             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
-            params![timestamp, model, input_tokens, output_tokens, cache_creation_tokens, cache_read_tokens, duration_ms],
+            "INSERT INTO requests (timestamp, model, input_tokens, output_tokens, cache_creation_tokens, cache_read_tokens, duration_ms, project, source)
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)",
+            params![timestamp, model, input_tokens, output_tokens, cache_creation_tokens, cache_read_tokens, duration_ms, project, source],
         ).map_err(|e| e.to_string())?;
         Ok(conn.last_insert_rowid())
     }
 
     pub fn query_requests(&self, since: &str, until: Option<&str>, model_filter: Option<&[String]>) -> Result<Vec<RequestRecord>, String> {
         let conn = self.conn.lock().map_err(|e| e.to_string())?;
-        let mut sql = "SELECT id, timestamp, model, input_tokens, output_tokens, cache_creation_tokens, cache_read_tokens, duration_ms FROM requests WHERE timestamp >= ?1".to_string();
+        let mut sql = "SELECT id, timestamp, model, input_tokens, output_tokens, cache_creation_tokens, cache_read_tokens, duration_ms, project, source FROM requests WHERE timestamp >= ?1".to_string();
 
         let mut param_idx = 2;
 
@@ -109,6 +118,8 @@ impl Database {
                 cache_creation_tokens: row.get(5)?,
                 cache_read_tokens: row.get(6)?,
                 duration_ms: row.get(7)?,
+                project: row.get::<_, Option<String>>(8)?.unwrap_or_default(),
+                source: row.get::<_, Option<String>>(9)?.unwrap_or_default(),
             })
         }).map_err(|e| e.to_string())?;
 
@@ -118,7 +129,7 @@ impl Database {
     pub fn get_latest(&self) -> Result<Option<RequestRecord>, String> {
         let conn = self.conn.lock().map_err(|e| e.to_string())?;
         let mut stmt = conn.prepare(
-            "SELECT id, timestamp, model, input_tokens, output_tokens, cache_creation_tokens, cache_read_tokens, duration_ms FROM requests ORDER BY id DESC LIMIT 1"
+            "SELECT id, timestamp, model, input_tokens, output_tokens, cache_creation_tokens, cache_read_tokens, duration_ms, project, source FROM requests ORDER BY id DESC LIMIT 1"
         ).map_err(|e| e.to_string())?;
 
         let mut rows = stmt.query_map([], |row| {
@@ -131,6 +142,8 @@ impl Database {
                 cache_creation_tokens: row.get(5)?,
                 cache_read_tokens: row.get(6)?,
                 duration_ms: row.get(7)?,
+                project: row.get::<_, Option<String>>(8)?.unwrap_or_default(),
+                source: row.get::<_, Option<String>>(9)?.unwrap_or_default(),
             })
         }).map_err(|e| e.to_string())?;
 
@@ -146,5 +159,82 @@ impl Database {
         let mut stmt = conn.prepare("SELECT model, COUNT(*) as cnt FROM requests GROUP BY model ORDER BY cnt DESC").map_err(|e| e.to_string())?;
         let rows = stmt.query_map([], |row| row.get::<_, String>(0)).map_err(|e| e.to_string())?;
         rows.collect::<Result<Vec<_>, _>>().map_err(|e| e.to_string())
+    }
+
+    pub fn delete_by_model(&self, model: &str) -> Result<u64, String> {
+        let conn = self.conn.lock().map_err(|e| e.to_string())?;
+        let count = conn.execute("DELETE FROM requests WHERE model = ?1", params![model])
+            .map_err(|e| e.to_string())?;
+        Ok(count as u64)
+    }
+
+    pub fn delete_all(&self) -> Result<u64, String> {
+        let conn = self.conn.lock().map_err(|e| e.to_string())?;
+        let count = conn.execute("DELETE FROM requests", [])
+            .map_err(|e| e.to_string())?;
+        Ok(count as u64)
+    }
+
+    pub fn get_projects(&self) -> Result<Vec<String>, String> {
+        let conn = self.conn.lock().map_err(|e| e.to_string())?;
+        let mut stmt = conn.prepare("SELECT DISTINCT project FROM requests WHERE project != '' ORDER BY project")
+            .map_err(|e| e.to_string())?;
+        let rows = stmt.query_map([], |row| row.get::<_, String>(0)).map_err(|e| e.to_string())?;
+        rows.collect::<Result<Vec<_>, _>>().map_err(|e| e.to_string())
+    }
+
+    pub fn calculate_cost(
+        &self,
+        since: &str,
+        project_whitelist: &[String],
+        model_whitelist: &[String],
+        model_prices: &std::collections::HashMap<String, crate::config::ModelPrice>,
+    ) -> Result<f64, String> {
+        let conn = self.conn.lock().map_err(|e| e.to_string())?;
+        let mut sql = "SELECT model, input_tokens, output_tokens, cache_creation_tokens, cache_read_tokens, project FROM requests WHERE timestamp >= ?1".to_string();
+        let mut param_values: Vec<Box<dyn rusqlite::types::ToSql>> = vec![Box::new(since.to_string())];
+        let mut param_idx = 2;
+
+        if !project_whitelist.is_empty() {
+            let placeholders: Vec<String> = project_whitelist.iter().enumerate()
+                .map(|(i, _)| format!("?{}", i + param_idx)).collect();
+            sql.push_str(&format!(" AND project IN ({})", placeholders.join(",")));
+            param_idx += project_whitelist.len();
+            for p in project_whitelist {
+                param_values.push(Box::new(p.clone()));
+            }
+        }
+
+        if !model_whitelist.is_empty() {
+            let placeholders: Vec<String> = model_whitelist.iter().enumerate()
+                .map(|(i, _)| format!("?{}", i + param_idx)).collect();
+            sql.push_str(&format!(" AND model IN ({})", placeholders.join(",")));
+            for m in model_whitelist {
+                param_values.push(Box::new(m.clone()));
+            }
+        }
+
+        let mut stmt = conn.prepare(&sql).map_err(|e| e.to_string())?;
+        let params_ref: Vec<&dyn rusqlite::types::ToSql> = param_values.iter().map(|p| p.as_ref()).collect();
+
+        let mut total_cost: f64 = 0.0;
+        let mut rows = stmt.query(params_ref.as_slice()).map_err(|e| e.to_string())?;
+        while let Some(row) = rows.next().map_err(|e| e.to_string())? {
+            let model: String = row.get(0).map_err(|e| e.to_string())?;
+            let input: i64 = row.get(1).map_err(|e| e.to_string())?;
+            let output: i64 = row.get(2).map_err(|e| e.to_string())?;
+            let cache_creation: i64 = row.get(3).map_err(|e| e.to_string())?;
+            let cache_read: i64 = row.get(4).map_err(|e| e.to_string())?;
+
+            if let Some(price) = model_prices.get(&model) {
+                let cost = (input as f64 * price.input
+                    + output as f64 * price.output
+                    + (cache_creation + cache_read) as f64 * price.cache)
+                    / 1_000_000.0;
+                total_cost += cost;
+            }
+        }
+
+        Ok(total_cost)
     }
 }
