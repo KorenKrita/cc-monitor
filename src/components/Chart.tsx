@@ -34,15 +34,18 @@ export function Chart({ requests, metric, timeRange, selectedModels, models, the
           color,
         },
         itemStyle: { color },
-        data: records.map((r) => [r.timestamp, getValue(r, metric)]),
+        data: records.map((r) => [r.timestamp, getValue(r, metric)]).filter(([, v]) => v !== null),
       };
     });
+
+    const xAxisMin = getXAxisMin(timeRange);
 
     return {
       animation: false,
       grid: { top: 12, right: 12, bottom: 28, left: 40 },
       xAxis: {
         type: "time",
+        min: xAxisMin,
         axisLine: { show: false },
         axisTick: { show: false },
         axisLabel: {
@@ -129,10 +132,22 @@ function groupByModel(requests: RequestRecord[], selectedModels: string[]): Reco
   return groups;
 }
 
-function getValue(record: RequestRecord, metric: Metric): number {
+function getValue(record: RequestRecord, metric: Metric): number | null {
   switch (metric) {
     case "out_rate": return record.output_tokens;
     case "in_rate": return record.input_tokens;
-    case "ttft": return record.duration_ms ?? 0;
+    case "ttft": return (record.duration_ms && record.duration_ms > 0) ? record.duration_ms : null;
+  }
+}
+
+function getXAxisMin(timeRange: TimeRange): string {
+  const now = new Date();
+  switch (timeRange) {
+    case "1h":
+      return new Date(now.getTime() - 60 * 60 * 1000).toISOString();
+    case "today":
+      return new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
+    case "yesterday":
+      return new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1).toISOString();
   }
 }

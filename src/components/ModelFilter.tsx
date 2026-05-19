@@ -13,16 +13,22 @@ interface Props {
 
 export function ModelFilter({ models, selected, onChange, latestValue, metricUnit, theme, isDark, aliases }: Props) {
   const colors = isDark ? colorPool.dark : colorPool.light;
+  const allSelected = selected.length === 0;
 
   const toggle = (model: string) => {
-    if (selected.includes(model)) {
-      onChange(selected.filter((m) => m !== model));
+    if (allSelected) {
+      onChange([model]);
+    } else if (selected.includes(model)) {
+      const next = selected.filter((m) => m !== model);
+      onChange(next);
     } else {
       onChange([...selected, model]);
     }
   };
 
-  const isSelected = (model: string) => selected.length === 0 || selected.includes(model);
+  const selectAll = () => onChange([]);
+
+  const isActive = (model: string) => allSelected || selected.includes(model);
 
   return (
     <div style={{ width: 100, paddingRight: 14, borderRight: `1px solid ${theme.border}`, display: "flex", flexDirection: "column" }}>
@@ -30,8 +36,25 @@ export function ModelFilter({ models, selected, onChange, latestValue, metricUni
         Models
       </div>
       <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+        {models.length > 1 && (
+          <label
+            onClick={selectAll}
+            style={{ display: "flex", alignItems: "center", gap: 6, cursor: "pointer" }}
+          >
+            <div style={{
+              width: 10, height: 10, borderRadius: 2,
+              background: allSelected ? theme.muted : "transparent",
+              border: allSelected ? "none" : `1.5px solid ${theme.border}`,
+            }} />
+            <span style={{
+              fontSize: 10,
+              color: allSelected ? theme.foreground : theme.muted,
+            }}>All</span>
+          </label>
+        )}
         {models.map((model, index) => {
           const color = colors[index % colors.length];
+          const active = isActive(model);
           return (
             <label
               key={model}
@@ -40,12 +63,12 @@ export function ModelFilter({ models, selected, onChange, latestValue, metricUni
             >
               <div style={{
                 width: 10, height: 10, borderRadius: 2,
-                background: isSelected(model) ? color : "transparent",
-                border: isSelected(model) ? "none" : `1.5px solid ${theme.border}`,
+                background: active ? color : "transparent",
+                border: active ? "none" : `1.5px solid ${theme.border}`,
               }} />
               <span style={{
                 fontSize: 10,
-                color: isSelected(model) ? theme.foreground : theme.muted,
+                color: active ? theme.foreground : theme.muted,
               }}>
                 {getModelDisplayName(model, aliases)}
               </span>
