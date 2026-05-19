@@ -319,7 +319,7 @@ export function Settings({ config, models, onSave, onClose, theme }: Props) {
           config={draft}
           models={models}
           onUpdate={(prices) => setDraft({ ...draft, cost: { ...draft.cost, model_prices: prices } })}
-          onSyncComplete={(newConfig) => setDraft(newConfig)}
+          onSyncComplete={(newConfig) => setDraft({ ...draft, cost: { ...draft.cost, model_prices: newConfig.cost.model_prices, last_sync_time: newConfig.cost.last_sync_time } })}
           theme={theme}
         />
 

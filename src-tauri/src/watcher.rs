@@ -129,7 +129,7 @@ where
     let last_pos = positions.get(path).copied().unwrap_or(0);
 
     if current_len < last_pos {
-        *positions.entry(path.clone()).or_insert(0) = 0;
+        *positions.entry(path.clone()).or_insert(0) = current_len;
         return;
     }
     if current_len == last_pos {
@@ -146,10 +146,11 @@ where
     }
 
     let mut line = String::new();
+    let mut reached_eof = false;
     loop {
         line.clear();
         match reader.read_line(&mut line) {
-            Ok(0) => break,
+            Ok(0) => { reached_eof = true; break; }
             Ok(_) => {
                 let trimmed = line.trim();
                 if !trimmed.is_empty() {
@@ -160,7 +161,9 @@ where
         }
     }
 
-    *positions.entry(path.clone()).or_insert(0) = current_len;
+    if reached_eof {
+        *positions.entry(path.clone()).or_insert(0) = current_len;
+    }
 }
 
 fn glob_jsonl_files(dir: &Path) -> Result<Vec<PathBuf>, std::io::Error> {
