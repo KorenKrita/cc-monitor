@@ -1,62 +1,65 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="960" height="520" viewBox="0 0 960 520">
-  <defs>
-    <filter id="shadow3">
-      <feDropShadow dx="0" dy="4" stdDeviation="8" flood-opacity="0.2"/>
-    </filter>
-  </defs>
+<svg xmlns="http://www.w3.org/2000/svg" width="480" height="320" viewBox="0 0 480 320">
+  <!-- Window: 480x320, bg #0E1223, padding 20 -->
+  <rect width="480" height="320" rx="12" fill="#0E1223"/>
 
-  <!-- Background -->
-  <rect width="960" height="520" fill="#1a1a2e"/>
+  <!-- "Settings" title: fontSize 13, fontWeight 500, marginBottom 16 -->
+  <text x="20" y="35" font-family="'Fira Sans', system-ui" font-size="13" fill="#F8FAFC" font-weight="500">Settings</text>
 
-  <!-- Settings Panel -->
-  <rect x="240" y="40" width="480" height="440" rx="12" fill="#0E1223" filter="url(#shadow3)" stroke="#272F42" stroke-width="1"/>
+  <!-- Scrollable content starts at y=51 (35+16), gap 14 between sections -->
 
-  <!-- Title -->
-  <text x="270" y="75" font-family="SF Pro Display, system-ui" font-size="13" fill="#F8FAFC" font-weight="500">Settings</text>
+  <!-- Section 1: Theme -->
+  <!-- Label: fontSize 9, color #94A3B8, uppercase, letterSpacing 0.5, marginBottom 4 -->
+  <text x="20" y="60" font-family="'Fira Sans', system-ui" font-size="9" fill="#94A3B8" letter-spacing="0.5">THEME</text>
+  <!-- Select: bg #1A1E2F, border 1px #272F42, borderRadius 4, padding 4px 8px, fontSize 11 -->
+  <rect x="20" y="64" width="440" height="24" rx="4" fill="#1A1E2F" stroke="#272F42" stroke-width="1"/>
+  <text x="28" y="80" font-family="'Fira Sans', system-ui" font-size="11" fill="#F8FAFC">System</text>
+  <!-- Dropdown arrow -->
+  <polygon points="448,76 452,76 450,80" fill="#94A3B8"/>
 
-  <!-- Theme Section -->
-  <text x="270" y="110" font-family="SF Mono, Fira Code, monospace" font-size="8" fill="#64748B" letter-spacing="0.5">THEME</text>
-  <rect x="270" y="118" width="420" height="30" rx="6" fill="#1A1E2F" stroke="#272F42" stroke-width="1"/>
-  <text x="284" y="137" font-family="SF Pro Display, system-ui" font-size="11" fill="#F8FAFC">System</text>
-  <text x="670" y="137" font-family="system-ui" font-size="10" fill="#64748B">▾</text>
+  <!-- Section 2: Status Bar Model Filter (y += 24 + 14 = 102) -->
+  <text x="20" y="105" font-family="'Fira Sans', system-ui" font-size="9" fill="#94A3B8" letter-spacing="0.5">STATUS BAR MODEL FILTER</text>
+  <rect x="20" y="109" width="440" height="24" rx="4" fill="#1A1E2F" stroke="#272F42" stroke-width="1"/>
+  <text x="28" y="125" font-family="'Fira Sans', system-ui" font-size="11" fill="#F8FAFC">Whitelist</text>
+  <polygon points="448,121 452,121 450,125" fill="#94A3B8"/>
+  <!-- Whitelist textarea: marginTop 6, height 40, Fira Code -->
+  <rect x="20" y="139" width="440" height="36" rx="4" fill="#1A1E2F" stroke="#272F42" stroke-width="1"/>
+  <text x="28" y="161" font-family="'Fira Code', monospace" font-size="11" fill="#F8FAFC">claude-opus-4-7, claude-sonnet-4-6</text>
+  <!-- Helper text -->
+  <text x="20" y="186" font-family="'Fira Sans', system-ui" font-size="9" fill="#94A3B8">Comma-separated model names, e.g. claude-opus-4-7, claude-sonnet-4-6</text>
 
-  <!-- Status Bar Model Filter -->
-  <text x="270" y="175" font-family="SF Mono, Fira Code, monospace" font-size="8" fill="#64748B" letter-spacing="0.5">STATUS BAR MODEL FILTER</text>
-  <rect x="270" y="183" width="420" height="30" rx="6" fill="#1A1E2F" stroke="#272F42" stroke-width="1"/>
-  <text x="284" y="202" font-family="SF Pro Display, system-ui" font-size="11" fill="#F8FAFC">Whitelist</text>
-  <text x="670" y="202" font-family="system-ui" font-size="10" fill="#64748B">▾</text>
+  <!-- Section 3: Display Mode (y ~ 200) -->
+  <text x="20" y="205" font-family="'Fira Sans', system-ui" font-size="9" fill="#94A3B8" letter-spacing="0.5">DISPLAY MODE</text>
+  <rect x="20" y="209" width="440" height="24" rx="4" fill="#1A1E2F" stroke="#272F42" stroke-width="1"/>
+  <text x="28" y="225" font-family="'Fira Sans', system-ui" font-size="11" fill="#F8FAFC">Average</text>
+  <polygon points="448,221 452,221 450,225" fill="#94A3B8"/>
+  <!-- Average minutes: marginTop 6, "Past [5] minutes" -->
+  <text x="28" y="250" font-family="'Fira Sans', system-ui" font-size="11" fill="#F8FAFC">Past</text>
+  <rect x="50" y="238" width="40" height="20" rx="4" fill="#1A1E2F" stroke="#272F42" stroke-width="1"/>
+  <text x="70" y="252" font-family="'Fira Code', monospace" font-size="11" fill="#F8FAFC" text-anchor="middle">5</text>
+  <text x="96" y="250" font-family="'Fira Sans', system-ui" font-size="11" fill="#F8FAFC">minutes</text>
 
-  <!-- Whitelist textarea -->
-  <rect x="270" y="220" width="420" height="36" rx="6" fill="#1A1E2F" stroke="#272F42" stroke-width="1"/>
-  <text x="284" y="242" font-family="SF Mono, Fira Code, monospace" font-size="10" fill="#F8FAFC">claude-opus-4-7, claude-sonnet-4-6</text>
-  <text x="270" y="270" font-family="SF Pro Display, system-ui" font-size="9" fill="#64748B">Comma-separated model names</text>
+  <!-- Section 4: Status Bar Items (y ~ 268) -->
+  <text x="20" y="275" font-family="'Fira Sans', system-ui" font-size="9" fill="#94A3B8" letter-spacing="0.5">STATUS BAR ITEMS</text>
+  <!-- Checked items with reorder arrows -->
+  <!-- ✓ ↓ Out Rate  ▲▼ -->
+  <rect x="20" y="279" width="10" height="10" rx="2" fill="#22C55E"/>
+  <text x="22" y="287" font-family="system-ui" font-size="7" fill="#fff">✓</text>
+  <text x="36" y="288" font-family="'Fira Sans', system-ui" font-size="11" fill="#F8FAFC">↓ Out Rate</text>
+  <text x="430" y="288" font-family="system-ui" font-size="12" fill="#272F42">▲</text>
+  <text x="448" y="288" font-family="system-ui" font-size="12" fill="#94A3B8">▼</text>
 
-  <!-- Display Mode -->
-  <text x="270" y="300" font-family="SF Mono, Fira Code, monospace" font-size="8" fill="#64748B" letter-spacing="0.5">DISPLAY MODE</text>
-  <rect x="270" y="308" width="420" height="30" rx="6" fill="#1A1E2F" stroke="#272F42" stroke-width="1"/>
-  <text x="284" y="327" font-family="SF Pro Display, system-ui" font-size="11" fill="#F8FAFC">Average</text>
-  <text x="670" y="327" font-family="system-ui" font-size="10" fill="#64748B">▾</text>
+  <rect x="20" y="293" width="10" height="10" rx="2" fill="#22C55E"/>
+  <text x="22" y="301" font-family="system-ui" font-size="7" fill="#fff">✓</text>
+  <text x="36" y="302" font-family="'Fira Sans', system-ui" font-size="11" fill="#F8FAFC">↑ In Rate</text>
+  <text x="430" y="302" font-family="system-ui" font-size="12" fill="#94A3B8">▲</text>
+  <text x="448" y="302" font-family="system-ui" font-size="12" fill="#94A3B8">▼</text>
 
-  <!-- Average minutes -->
-  <text x="284" y="360" font-family="SF Pro Display, system-ui" font-size="11" fill="#F8FAFC">Past</text>
-  <rect x="310" y="346" width="44" height="24" rx="4" fill="#1A1E2F" stroke="#272F42" stroke-width="1"/>
-  <text x="332" y="362" font-family="SF Mono, Fira Code, monospace" font-size="11" fill="#F8FAFC" text-anchor="middle">5</text>
-  <text x="362" y="360" font-family="SF Pro Display, system-ui" font-size="11" fill="#F8FAFC">minutes</text>
-
-  <!-- Model Aliases -->
-  <text x="270" y="400" font-family="SF Mono, Fira Code, monospace" font-size="8" fill="#64748B" letter-spacing="0.5">MODEL ALIASES</text>
-  <rect x="270" y="408" width="200" height="26" rx="4" fill="#1A1E2F" stroke="#272F42" stroke-width="1"/>
-  <text x="284" y="425" font-family="SF Mono, Fira Code, monospace" font-size="9" fill="#94A3B8">claude-opus-4-7</text>
-  <text x="480" y="425" font-family="SF Pro Display, system-ui" font-size="11" fill="#64748B">→</text>
-  <rect x="500" y="408" width="120" height="26" rx="4" fill="#1A1E2F" stroke="#272F42" stroke-width="1"/>
-  <text x="514" y="425" font-family="SF Mono, Fira Code, monospace" font-size="9" fill="#F8FAFC">opus</text>
-  <rect x="630" y="408" width="24" height="26" rx="4" fill="#EF4444" opacity="0.2"/>
-  <text x="642" y="425" font-family="system-ui" font-size="11" fill="#EF4444" text-anchor="middle">×</text>
-
-  <!-- Footer buttons -->
-  <line x1="270" y1="450" x2="690" y2="450" stroke="#272F42" stroke-width="1"/>
-  <rect x="590" y="458" width="60" height="26" rx="6" fill="transparent" stroke="#272F42" stroke-width="1"/>
-  <text x="620" y="475" font-family="SF Pro Display, system-ui" font-size="10" fill="#94A3B8" text-anchor="middle">Cancel</text>
-  <rect x="658" y="458" width="50" height="26" rx="6" fill="#22C55E"/>
-  <text x="683" y="475" font-family="SF Pro Display, system-ui" font-size="10" fill="#fff" text-anchor="middle">Save</text>
+  <!-- Footer: borderTop 1px #272F42, flex end, gap 8 -->
+  <line x1="20" y1="308" x2="460" y2="308" stroke="#272F42" stroke-width="1"/>
+  <!-- Cancel button: transparent bg, border 1px #272F42, borderRadius 6, padding 5px 14px -->
+  <rect x="370" y="311" width="46" height="22" rx="6" fill="transparent" stroke="#272F42" stroke-width="1"/>
+  <text x="393" y="325" font-family="'Fira Sans', system-ui" font-size="11" fill="#94A3B8" text-anchor="middle">Cancel</text>
+  <!-- Save button: bg #22C55E, borderRadius 6 -->
+  <rect x="424" y="311" width="36" height="22" rx="6" fill="#22C55E"/>
+  <text x="442" y="325" font-family="'Fira Sans', system-ui" font-size="11" fill="#fff" text-anchor="middle">Save</text>
 </svg>

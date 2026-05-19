@@ -1,108 +1,105 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="960" height="640" viewBox="0 0 960 640">
-  <defs>
-    <linearGradient id="chartLine1" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%" style="stop-color:#6366f1;stop-opacity:1"/>
-      <stop offset="100%" style="stop-color:#6366f1;stop-opacity:0.8"/>
-    </linearGradient>
-    <linearGradient id="chartLine2" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%" style="stop-color:#22C55E;stop-opacity:1"/>
-      <stop offset="100%" style="stop-color:#22C55E;stop-opacity:0.8"/>
-    </linearGradient>
-    <filter id="shadow">
-      <feDropShadow dx="0" dy="8" stdDeviation="16" flood-opacity="0.3"/>
-    </filter>
-  </defs>
+<svg xmlns="http://www.w3.org/2000/svg" width="480" height="320" viewBox="0 0 480 320">
+  <!-- Window background - exact: bg #0E1223, no decorations, borderRadius 12 from Tauri -->
+  <rect width="480" height="320" rx="12" fill="#0E1223"/>
 
-  <!-- Background -->
-  <rect width="960" height="640" fill="#1a1a2e" rx="0"/>
+  <!-- Close button - top left, 12x12, green circle -->
+  <circle cx="12" cy="12" r="6" fill="#22C55E"/>
+  <text x="12" y="14.5" font-family="system-ui" font-size="9" fill="#064E3B" text-anchor="middle" font-weight="700">×</text>
 
-  <!-- macOS Menu Bar -->
-  <rect x="0" y="0" width="960" height="28" fill="#1c1c1e" opacity="0.95"/>
-  <text x="880" y="18" font-family="SF Mono, Fira Code, monospace" font-size="11" fill="#e2e8f0" text-anchor="end">⟨opus⟩ 42 tok/s │ 128 tok/s │ 1.2s</text>
+  <!-- Quit button - bottom left, 16x16, red ⏻ -->
+  <text x="14" y="312" font-family="system-ui" font-size="12" fill="#EF4444" text-anchor="middle">⏻</text>
 
-  <!-- App Window -->
-  <rect x="240" y="60" width="480" height="320" rx="12" fill="#0E1223" filter="url(#shadow)" stroke="#272F42" stroke-width="1"/>
+  <!-- Settings gear - bottom right -->
+  <text x="468" y="314" font-family="system-ui" font-size="14" fill="#94A3B8" text-anchor="middle">⚙</text>
 
-  <!-- Metric Tabs -->
-  <rect x="260" y="80" width="70" height="24" rx="6" fill="#272F42"/>
-  <text x="295" y="96" font-family="SF Mono, Fira Code, monospace" font-size="10" fill="#F8FAFC" text-anchor="middle">out tok/s</text>
-  <rect x="336" y="80" width="62" height="24" rx="6" fill="transparent"/>
-  <text x="367" y="96" font-family="SF Mono, Fira Code, monospace" font-size="10" fill="#64748B" text-anchor="middle">in tok/s</text>
-  <rect x="404" y="80" width="42" height="24" rx="6" fill="transparent"/>
-  <text x="425" y="96" font-family="SF Mono, Fira Code, monospace" font-size="10" fill="#64748B" text-anchor="middle">ttft</text>
+  <!-- Content area starts at padding 20 -->
+  <!-- Top row: MetricTabs (left) + TimeRangeTabs (right), marginBottom 14 -->
 
-  <!-- Time Range Tabs -->
-  <rect x="600" y="80" width="32" height="24" rx="6" fill="#272F42"/>
-  <text x="616" y="96" font-family="SF Mono, Fira Code, monospace" font-size="10" fill="#F8FAFC" text-anchor="middle">1h</text>
-  <text x="652" y="96" font-family="SF Mono, Fira Code, monospace" font-size="10" fill="#64748B" text-anchor="middle">today</text>
-  <text x="698" y="96" font-family="SF Mono, Fira Code, monospace" font-size="10" fill="#64748B" text-anchor="middle">yday</text>
+  <!-- MetricTabs: flex, gap 2, bg mutedBg #272F42, borderRadius 8, padding 3 -->
+  <rect x="20" y="20" width="108" height="26" rx="8" fill="#272F42"/>
+  <!-- Active tab "Out": padding 4px 10px, borderRadius 6, bg #272F42, color #22C55E -->
+  <rect x="23" y="23" width="34" height="20" rx="6" fill="#272F42"/>
+  <text x="40" y="36" font-family="'Fira Sans', system-ui" font-size="11" fill="#22C55E" text-anchor="middle" font-weight="500">Out</text>
+  <!-- Inactive "In" -->
+  <text x="72" y="36" font-family="'Fira Sans', system-ui" font-size="11" fill="#64748B" text-anchor="middle">In</text>
+  <!-- Inactive "TTFT" -->
+  <text x="107" y="36" font-family="'Fira Sans', system-ui" font-size="11" fill="#64748B" text-anchor="middle">TTFT</text>
 
-  <!-- Model Filter Sidebar -->
-  <text x="268" y="130" font-family="SF Mono, Fira Code, monospace" font-size="8" fill="#64748B" letter-spacing="0.5">MODELS</text>
-  <rect x="268" y="140" width="8" height="8" rx="2" fill="#6366f1"/>
-  <text x="282" y="148" font-family="SF Mono, Fira Code, monospace" font-size="9" fill="#F8FAFC">opus-4-7</text>
-  <rect x="268" y="158" width="8" height="8" rx="2" fill="#22C55E"/>
-  <text x="282" y="166" font-family="SF Mono, Fira Code, monospace" font-size="9" fill="#F8FAFC">sonnet-4-6</text>
-  <rect x="268" y="176" width="8" height="8" rx="2" fill="#F59E0B"/>
-  <text x="282" y="184" font-family="SF Mono, Fira Code, monospace" font-size="9" fill="#94A3B8">haiku-4-5</text>
+  <!-- TimeRangeTabs: right aligned -->
+  <rect x="340" y="20" width="120" height="26" rx="8" fill="#272F42"/>
+  <!-- Active "1h" -->
+  <rect x="343" y="23" width="26" height="20" rx="6" fill="#272F42"/>
+  <text x="356" y="36" font-family="'Fira Sans', system-ui" font-size="11" fill="#F8FAFC" text-anchor="middle">1h</text>
+  <!-- Inactive "Today" -->
+  <text x="393" y="36" font-family="'Fira Sans', system-ui" font-size="11" fill="#64748B" text-anchor="middle">Today</text>
+  <!-- Inactive "Yesterday" -->
+  <text x="440" y="36" font-family="'Fira Sans', system-ui" font-size="11" fill="#64748B" text-anchor="middle">Yday</text>
 
-  <!-- Latest Value -->
-  <line x1="268" y1="320" x2="340" y2="320" stroke="#272F42" stroke-width="1"/>
-  <text x="268" y="336" font-family="SF Mono, Fira Code, monospace" font-size="7" fill="#64748B" letter-spacing="0.5">LATEST</text>
-  <text x="268" y="352" font-family="SF Mono, Fira Code, monospace" font-size="14" fill="#F8FAFC" font-weight="500">42 tok/s</text>
+  <!-- Main area: top 60 (20 padding + 26 tabs + 14 gap), flex row, gap 14 -->
+  <!-- ModelFilter: width 100, paddingRight 14, borderRight 1px solid #272F42 -->
 
-  <!-- Chart Area -->
-  <rect x="350" y="120" width="356" height="240" rx="8" fill="#1A1E2F"/>
+  <!-- "MODELS" label -->
+  <text x="20" y="72" font-family="'Fira Sans', system-ui" font-size="9" fill="#64748B" letter-spacing="0.5">MODELS</text>
 
-  <!-- Y-axis labels -->
-  <text x="360" y="140" font-family="SF Mono, Fira Code, monospace" font-size="8" fill="#64748B">80</text>
-  <text x="360" y="180" font-family="SF Mono, Fira Code, monospace" font-size="8" fill="#64748B">60</text>
-  <text x="360" y="220" font-family="SF Mono, Fira Code, monospace" font-size="8" fill="#64748B">40</text>
-  <text x="360" y="260" font-family="SF Mono, Fira Code, monospace" font-size="8" fill="#64748B">20</text>
-  <text x="360" y="300" font-family="SF Mono, Fira Code, monospace" font-size="8" fill="#64748B">0</text>
+  <!-- Model checkboxes, gap 8 -->
+  <!-- All checkbox -->
+  <rect x="20" y="82" width="10" height="10" rx="2" fill="#94A3B8"/>
+  <text x="36" y="91" font-family="'Fira Sans', system-ui" font-size="10" fill="#F8FAFC">All</text>
 
-  <!-- Grid lines -->
-  <line x1="380" y1="136" x2="696" y2="136" stroke="#272F42" stroke-width="0.5"/>
-  <line x1="380" y1="176" x2="696" y2="176" stroke="#272F42" stroke-width="0.5"/>
-  <line x1="380" y1="216" x2="696" y2="216" stroke="#272F42" stroke-width="0.5"/>
-  <line x1="380" y1="256" x2="696" y2="256" stroke="#272F42" stroke-width="0.5"/>
-  <line x1="380" y1="296" x2="696" y2="296" stroke="#272F42" stroke-width="0.5"/>
+  <!-- opus-4-7: color #6366f1 -->
+  <rect x="20" y="100" width="10" height="10" rx="2" fill="#6366f1"/>
+  <text x="36" y="109" font-family="'Fira Sans', system-ui" font-size="10" fill="#F8FAFC">opus-4-7</text>
 
-  <!-- X-axis labels -->
-  <text x="400" y="345" font-family="SF Mono, Fira Code, monospace" font-size="8" fill="#64748B">14:00</text>
-  <text x="480" y="345" font-family="SF Mono, Fira Code, monospace" font-size="8" fill="#64748B">14:15</text>
-  <text x="560" y="345" font-family="SF Mono, Fira Code, monospace" font-size="8" fill="#64748B">14:30</text>
-  <text x="640" y="345" font-family="SF Mono, Fira Code, monospace" font-size="8" fill="#64748B">14:45</text>
+  <!-- sonnet-4-6: color #22C55E -->
+  <rect x="20" y="118" width="10" height="10" rx="2" fill="#22C55E"/>
+  <text x="36" y="127" font-family="'Fira Sans', system-ui" font-size="10" fill="#F8FAFC">sonnet-4-6</text>
 
-  <!-- Chart Line 1 (Opus - purple) -->
-  <polyline points="390,260 420,240 440,220 460,250 480,200 510,180 530,190 550,160 570,170 590,150 610,165 630,140 650,155 670,145 690,150" fill="none" stroke="#6366f1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- haiku-4-5: color #F59E0B -->
+  <rect x="20" y="136" width="10" height="10" rx="2" fill="#F59E0B"/>
+  <text x="36" y="145" font-family="'Fira Sans', system-ui" font-size="10" fill="#F8FAFC">haiku-4-5</text>
 
-  <!-- Chart Line 2 (Sonnet - green) -->
-  <polyline points="390,280 420,270 440,260 460,275 480,250 510,240 530,255 550,230 570,235 590,220 610,230 630,215 650,225 670,210 690,220" fill="none" stroke="#22C55E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Border right of ModelFilter at x=120 (20 + 100) -->
+  <line x1="120" y1="60" x2="120" y2="300" stroke="#272F42" stroke-width="1"/>
 
-  <!-- Quit button -->
-  <text x="254" y="372" font-family="system-ui" font-size="12" fill="#EF4444">⏻</text>
+  <!-- Latest section at bottom of ModelFilter -->
+  <line x1="20" y1="265" x2="106" y2="265" stroke="#272F42" stroke-width="1"/>
+  <text x="20" y="280" font-family="'Fira Sans', system-ui" font-size="8" fill="#64748B" letter-spacing="0.5">LATEST</text>
+  <text x="20" y="298" font-family="'Fira Sans', system-ui" font-size="14" fill="#F8FAFC" font-weight="500">42</text>
+  <text x="20" y="310" font-family="'Fira Sans', system-ui" font-size="9" fill="#64748B">tok/s</text>
 
-  <!-- Settings gear -->
-  <text x="700" y="372" font-family="system-ui" font-size="11" fill="#64748B">⚙</text>
+  <!-- Chart area: starts at x=134 (120 + 14 gap), flex 1, bg #1A1E2F, borderRadius 8, padding 8 -->
+  <rect x="134" y="60" width="326" height="240" rx="8" fill="#1A1E2F"/>
 
-  <!-- Caption below window -->
-  <text x="480" y="430" font-family="SF Pro Display, system-ui, sans-serif" font-size="13" fill="#94A3B8" text-anchor="middle">Dark theme — Real-time output token rate by model</text>
+  <!-- ECharts grid: top 12, right 12, bottom 28, left 40 -->
+  <!-- Chart inner area: x=134+8+40=182, y=60+8+12=80, w=326-8-8-40-12=258, h=240-8-8-12-28=184 -->
 
-  <!-- Feature highlights -->
-  <text x="480" y="500" font-family="SF Pro Display, system-ui, sans-serif" font-size="20" fill="#F8FAFC" text-anchor="middle" font-weight="600">CC Monitor</text>
-  <text x="480" y="530" font-family="SF Pro Display, system-ui, sans-serif" font-size="13" fill="#94A3B8" text-anchor="middle">Real-time Claude Code performance metrics in your macOS menu bar</text>
+  <!-- Y-axis labels: fontSize 9, Fira Code, color #64748B -->
+  <text x="178" y="84" font-family="'Fira Code', monospace" font-size="9" fill="#64748B" text-anchor="end">80</text>
+  <text x="178" y="130" font-family="'Fira Code', monospace" font-size="9" fill="#64748B" text-anchor="end">60</text>
+  <text x="178" y="176" font-family="'Fira Code', monospace" font-size="9" fill="#64748B" text-anchor="end">40</text>
+  <text x="178" y="222" font-family="'Fira Code', monospace" font-size="9" fill="#64748B" text-anchor="end">20</text>
+  <text x="178" y="268" font-family="'Fira Code', monospace" font-size="9" fill="#64748B" text-anchor="end">0</text>
 
-  <!-- Feature pills -->
-  <rect x="200" y="560" width="120" height="28" rx="14" fill="#272F42"/>
-  <text x="260" y="578" font-family="SF Mono, Fira Code, monospace" font-size="10" fill="#6366f1" text-anchor="middle">Token Rate</text>
+  <!-- Grid lines: color #272F42, solid -->
+  <line x1="182" y1="80" x2="440" y2="80" stroke="#272F42" stroke-width="0.5"/>
+  <line x1="182" y1="126" x2="440" y2="126" stroke="#272F42" stroke-width="0.5"/>
+  <line x1="182" y1="172" x2="440" y2="172" stroke="#272F42" stroke-width="0.5"/>
+  <line x1="182" y1="218" x2="440" y2="218" stroke="#272F42" stroke-width="0.5"/>
+  <line x1="182" y1="264" x2="440" y2="264" stroke="#272F42" stroke-width="0.5"/>
 
-  <rect x="340" y="560" width="100" height="28" rx="14" fill="#272F42"/>
-  <text x="390" y="578" font-family="SF Mono, Fira Code, monospace" font-size="10" fill="#22C55E" text-anchor="middle">TTFT</text>
+  <!-- X-axis labels: fontSize 9, Fira Code -->
+  <text x="215" y="284" font-family="'Fira Code', monospace" font-size="9" fill="#64748B" text-anchor="middle">14:00</text>
+  <text x="280" y="284" font-family="'Fira Code', monospace" font-size="9" fill="#64748B" text-anchor="middle">14:15</text>
+  <text x="345" y="284" font-family="'Fira Code', monospace" font-size="9" fill="#64748B" text-anchor="middle">14:30</text>
+  <text x="410" y="284" font-family="'Fira Code', monospace" font-size="9" fill="#64748B" text-anchor="middle">14:45</text>
 
-  <rect x="460" y="560" width="130" height="28" rx="14" fill="#272F42"/>
-  <text x="525" y="578" font-family="SF Mono, Fira Code, monospace" font-size="10" fill="#F59E0B" text-anchor="middle">Multi-Model</text>
+  <!-- Chart lines: width 2, smooth -->
+  <!-- opus-4-7 line (#6366f1) - higher throughput -->
+  <polyline points="190,220 210,200 230,185 250,195 270,170 290,155 310,160 330,140 350,148 370,135 390,142 410,128 430,138" fill="none" stroke="#6366f1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
 
-  <rect x="610" y="560" width="150" height="28" rx="14" fill="#272F42"/>
-  <text x="685" y="578" font-family="SF Mono, Fira Code, monospace" font-size="10" fill="#EC4899" text-anchor="middle">Menu Bar Live</text>
+  <!-- sonnet-4-6 line (#22C55E) - medium throughput -->
+  <polyline points="190,245 210,235 230,225 250,232 270,215 290,205 310,212 330,195 350,200 370,190 390,196 410,185 430,192" fill="none" stroke="#22C55E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- haiku-4-5 line (#F59E0B) - lower throughput -->
+  <polyline points="190,255 210,248 230,242 250,246 270,238 290,232 310,236 330,225 350,228 370,222 390,226 410,218 430,223" fill="none" stroke="#F59E0B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
 </svg>
