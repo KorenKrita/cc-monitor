@@ -48,9 +48,7 @@ export function Chart({ requests, metric, timeRange, selectedModels, models, the
     });
 
     const xAxisMin = getXAxisMin(timeRange);
-    const xAxisMax = timeRange === "yesterday"
-      ? new Date(new Date().getFullYear(), new Date().getMonth(), new Date().getDate()).toISOString()
-      : undefined;
+    const xAxisMax = getXAxisMax(timeRange);
 
     return {
       animation: false,
@@ -178,6 +176,18 @@ function getBucketSize(timeRange: TimeRange): number | null {
     case "1h": return 5 * 60 * 1000;
     case "today": return 30 * 60 * 1000;
     case "yesterday": return 60 * 60 * 1000;
+  }
+}
+
+function getXAxisMax(timeRange: TimeRange): string {
+  const now = new Date();
+  switch (timeRange) {
+    case "1h":
+      return now.toISOString();
+    case "today":
+      return now.toISOString();
+    case "yesterday":
+      return new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
   }
 }
 
