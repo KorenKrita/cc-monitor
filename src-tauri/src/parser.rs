@@ -56,6 +56,11 @@ impl SessionTracker {
             if let Some(ts) = &entry.timestamp {
                 let mut map = self.last_user_timestamps.lock().ok()?;
                 map.insert(session_id, ts.clone());
+                if map.len() > 100 {
+                    if let Some(oldest) = map.keys().next().cloned() {
+                        map.remove(&oldest);
+                    }
+                }
             }
             return None;
         }

@@ -45,12 +45,16 @@ export function useMonitorData() {
   const fetchData = useCallback(async (timeRange: TimeRange, modelFilter?: string[]) => {
     currentRange.current = { timeRange, modelFilter };
     const { since, until } = getTimeRange(timeRange);
-    const data = await invoke<RequestRecord[]>("get_requests", {
-      since,
-      until: until || null,
-      models: modelFilter && modelFilter.length > 0 ? modelFilter : null,
-    });
-    setRequests(data);
+    try {
+      const data = await invoke<RequestRecord[]>("get_requests", {
+        since,
+        until: until || null,
+        models: modelFilter && modelFilter.length > 0 ? modelFilter : null,
+      });
+      setRequests(data);
+    } catch (e) {
+      console.error("Failed to fetch requests:", e);
+    }
   }, []);
 
   return { requests, models, latest, fetchData };

@@ -28,7 +28,8 @@ impl Database {
         let conn = Connection::open(path).map_err(|e| e.to_string())?;
 
         conn.execute_batch(
-            "CREATE TABLE IF NOT EXISTS requests (
+            "PRAGMA journal_mode=WAL;
+            CREATE TABLE IF NOT EXISTS requests (
                 id INTEGER PRIMARY KEY,
                 timestamp TEXT NOT NULL,
                 model TEXT NOT NULL,

@@ -52,7 +52,11 @@ pub fn start_polling(tx: mpsc::UnboundedSender<ParsedRequest>) {
                 let current_len = meta.len();
                 let last_pos = file_positions.get(path).copied().unwrap_or(0);
 
-                if current_len <= last_pos {
+                if current_len < last_pos {
+                    file_positions.insert(path.clone(), 0);
+                    continue;
+                }
+                if current_len == last_pos {
                     continue;
                 }
 

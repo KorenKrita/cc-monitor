@@ -81,6 +81,10 @@ fn main() {
             // Process incoming requests
             let handle_clone = handle.clone();
             tauri::async_runtime::spawn(async move {
+                let mut current_config = config::load_config();
+                let mut config_mtime = std::fs::metadata(config::config_dir().join("settings.json"))
+                    .and_then(|m| m.modified()).ok();
+
                 while let Some(request) = rx.recv().await {
                     let _ = db_clone.insert_request(
                         &request.timestamp,
@@ -94,7 +98,13 @@ fn main() {
 
                     let _ = handle_clone.emit("new-request", &request);
 
-                    let current_config = config::load_config();
+                    // Reload config only if file changed
+                    let new_mtime = std::fs::metadata(config::config_dir().join("settings.json"))
+                        .and_then(|m| m.modified()).ok();
+                    if new_mtime != config_mtime {
+                        current_config = config::load_config();
+                        config_mtime = new_mtime;
+                    }
 
                     let should_display = match current_config.tray.model_filter.as_str() {
                         "whitelist" => current_config.tray.model_whitelist.contains(&request.model),
