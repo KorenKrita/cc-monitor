@@ -1,128 +1,91 @@
-use notify::{Config, Event, EventKind, RecommendedWatcher, RecursiveMode, Watcher};
 use std::collections::HashMap;
 use std::fs::File;
 use std::io::{BufRead, BufReader, Seek, SeekFrom};
 use std::path::{Path, PathBuf};
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
+use std::time::Duration;
 use tokio::sync::mpsc;
 
 use crate::parser::{ParsedRequest, SessionTracker};
 
-pub struct FileWatcher {
-    _watcher: RecommendedWatcher,
-}
-
-impl FileWatcher {
-    pub fn start(
-        tx: mpsc::UnboundedSender<ParsedRequest>,
-    ) -> Result<Self, String> {
-        let claude_dir = dirs::home_dir()
-            .ok_or("no home dir")?
-            .join(".claude")
-            .join("projects");
-
-        if !claude_dir.exists() {
-            return Err(format!("{} does not exist", claude_dir.display()));
-        }
+pub fn start_polling(tx: mpsc::UnboundedSender<ParsedRequest>) {
+    std::thread::spawn(move || {
+        let claude_dir = match dirs::home_dir() {
+            Some(h) => h.join(".claude").join("projects"),
+            None => return,
+        };
+        if !claude_dir.exists() { return; }
 
         let tracker = Arc::new(SessionTracker::new());
-        let file_positions: Arc<Mutex<HashMap<PathBuf, u64>>> = Arc::new(Mutex::new(HashMap::new()));
+        let mut file_positions: HashMap<PathBuf, u64> = HashMap::new();
 
-        // Record current end-of-file and pre-seed tracker with last user timestamps
-        if let Ok(entries) = glob_jsonl_files(&claude_dir) {
-            let mut positions = file_positions.lock().unwrap();
-            for path in &entries {
-                if let Ok(metadata) = std::fs::metadata(path) {
-                    positions.insert(path.clone(), metadata.len());
+        // Initialize: record current EOF for all files, seed tracker
+        if let Ok(files) = glob_jsonl_files(&claude_dir) {
+            for path in &files {
+                if let Ok(meta) = std::fs::metadata(path) {
+                    file_positions.insert(path.clone(), meta.len());
                 }
             }
-            // Seed session tracker with recent user timestamps from each file
-            for path in &entries {
+            // Seed with last user timestamp from recently modified files only
+            let mut recent: Vec<_> = files.iter()
+                .filter_map(|p| std::fs::metadata(p).ok().map(|m| (p, m.modified().ok())))
+                .filter_map(|(p, t)| t.map(|t| (p, t)))
+                .collect();
+            recent.sort_by(|a, b| b.1.cmp(&a.1));
+            for (path, _) in recent.iter().take(5) {
                 seed_last_user_timestamp(path, &tracker);
             }
         }
 
-        let tracker_clone = tracker.clone();
-        let positions_clone = file_positions.clone();
-        let tx_clone = tx.clone();
+        // Poll loop: check for file changes every 1 second
+        loop {
+            std::thread::sleep(Duration::from_secs(1));
 
-        let mut watcher = RecommendedWatcher::new(
-            move |res: Result<Event, notify::Error>| {
-                if let Ok(event) = res {
-                    if matches!(event.kind, EventKind::Modify(_) | EventKind::Create(_)) {
-                        for path in &event.paths {
-                            if path.extension().map_or(false, |e| e == "jsonl") {
-                                process_new_lines(
-                                    path,
-                                    &positions_clone,
-                                    &tracker_clone,
-                                    &tx_clone,
-                                );
+            let files = match glob_jsonl_files(&claude_dir) {
+                Ok(f) => f,
+                Err(_) => continue,
+            };
+
+            for path in &files {
+                let meta = match std::fs::metadata(path) {
+                    Ok(m) => m,
+                    Err(_) => continue,
+                };
+
+                let current_len = meta.len();
+                let last_pos = file_positions.get(path).copied().unwrap_or(0);
+
+                if current_len <= last_pos {
+                    continue;
+                }
+
+                // File grew — read new lines
+                if let Ok(file) = File::open(path) {
+                    let mut reader = BufReader::new(file);
+                    if reader.seek(SeekFrom::Start(last_pos)).is_ok() {
+                        let mut line = String::new();
+                        loop {
+                            line.clear();
+                            match reader.read_line(&mut line) {
+                                Ok(0) => break,
+                                Ok(_) => {
+                                    let trimmed = line.trim();
+                                    if !trimmed.is_empty() {
+                                        if let Some(request) = tracker.parse_line(trimmed) {
+                                            let _ = tx.send(request);
+                                        }
+                                    }
+                                }
+                                Err(_) => break,
                             }
                         }
                     }
                 }
-            },
-            Config::default(),
-        ).map_err(|e| e.to_string())?;
 
-        watcher.watch(&claude_dir, RecursiveMode::Recursive).map_err(|e| e.to_string())?;
-
-        Ok(Self { _watcher: watcher })
-    }
-}
-
-fn process_new_lines(
-    path: &Path,
-    positions: &Arc<Mutex<HashMap<PathBuf, u64>>>,
-    tracker: &Arc<SessionTracker>,
-    tx: &mpsc::UnboundedSender<ParsedRequest>,
-) {
-    let mut pos_map = match positions.lock() {
-        Ok(m) => m,
-        Err(_) => return,
-    };
-
-    let last_pos = pos_map.get(path).copied().unwrap_or(0);
-
-    let file = match File::open(path) {
-        Ok(f) => f,
-        Err(_) => return,
-    };
-
-    let metadata = match file.metadata() {
-        Ok(m) => m,
-        Err(_) => return,
-    };
-
-    let current_len = metadata.len();
-    if current_len <= last_pos {
-        return;
-    }
-
-    let mut reader = BufReader::new(file);
-    if reader.seek(SeekFrom::Start(last_pos)).is_err() {
-        return;
-    }
-
-    let mut line = String::new();
-    loop {
-        line.clear();
-        match reader.read_line(&mut line) {
-            Ok(0) => break,
-            Ok(_) => {
-                let trimmed = line.trim();
-                if !trimmed.is_empty() {
-                    if let Some(request) = tracker.parse_line(trimmed) {
-                        let _ = tx.send(request);
-                    }
-                }
+                file_positions.insert(path.clone(), current_len);
             }
-            Err(_) => break,
         }
-    }
-
-    pos_map.insert(path.to_path_buf(), current_len);
+    });
 }
 
 fn glob_jsonl_files(dir: &Path) -> Result<Vec<PathBuf>, std::io::Error> {
@@ -144,18 +107,20 @@ fn glob_jsonl_files(dir: &Path) -> Result<Vec<PathBuf>, std::io::Error> {
 }
 
 fn seed_last_user_timestamp(path: &Path, tracker: &Arc<SessionTracker>) {
-    let content = match std::fs::read_to_string(path) {
-        Ok(c) => c,
+    let file = match File::open(path) {
+        Ok(f) => f,
         Err(_) => return,
     };
-    // Scan from the end to find the last "user" type entry
-    for line in content.lines().rev() {
-        let trimmed = line.trim();
-        if trimmed.is_empty() { continue; }
-        if trimmed.contains("\"type\":\"user\"") || trimmed.contains("\"type\": \"user\"") {
-            // Feed it to the tracker to record the timestamp
-            tracker.parse_line(trimmed);
-            return;
+    let reader = BufReader::new(file);
+    let mut last_user_line: Option<String> = None;
+    for line in reader.lines() {
+        if let Ok(l) = line {
+            if l.contains("\"type\":\"user\"") || l.contains("\"type\": \"user\"") {
+                last_user_line = Some(l);
+            }
         }
+    }
+    if let Some(line) = last_user_line {
+        tracker.parse_line(&line);
     }
 }

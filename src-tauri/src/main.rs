@@ -74,14 +74,9 @@ fn main() {
                 }
             });
 
-            // Start file watcher
+            // Start file watcher (polling every 1s)
             let (tx, mut rx) = mpsc::unbounded_channel();
-
-            std::thread::spawn(move || {
-                let _watcher = watcher::FileWatcher::start(tx)
-                    .expect("Failed to start file watcher");
-                std::thread::park();
-            });
+            watcher::start_polling(tx);
 
             // Process incoming requests
             let handle_clone = handle.clone();
