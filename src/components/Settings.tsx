@@ -103,6 +103,27 @@ export function Settings({ config, onSave, onClose, theme }: Props) {
             <option value="all">All Models</option>
             <option value="whitelist">Whitelist</option>
           </select>
+          {draft.tray.model_filter === "whitelist" && (
+            <div style={{ marginTop: 6 }}>
+              <textarea
+                value={draft.tray.model_whitelist.join(", ")}
+                onChange={(e) => {
+                  const list = e.target.value.split(",").map((s) => s.trim()).filter(Boolean);
+                  setDraft({ ...draft, tray: { ...draft.tray, model_whitelist: list } });
+                }}
+                placeholder="claude-opus-4-7, claude-sonnet-4-6"
+                style={{
+                  ...inputStyle,
+                  height: 40,
+                  resize: "vertical" as const,
+                  fontFamily: "'Fira Code', monospace",
+                }}
+              />
+              <div style={{ fontSize: 9, color: theme.muted, marginTop: 3 }}>
+                Comma-separated model names, e.g. claude-opus-4-7, claude-sonnet-4-6
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Tray Items */}

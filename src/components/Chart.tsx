@@ -61,7 +61,7 @@ export function Chart({ requests, metric, timeRange, selectedModels, models, the
         max: xAxisMax,
         axisLine: { show: false },
         axisTick: { show: false },
-        splitNumber: timeRange === "1h" ? 6 : 4,
+        splitNumber: timeRange === "1h" ? 4 : 4,
         axisLabel: {
           fontSize: 9,
           color: theme.tabInactiveText,
