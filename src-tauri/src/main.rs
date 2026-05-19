@@ -142,7 +142,7 @@ fn main() {
                         _ => true,
                     };
 
-                    if !should_display {
+                    if !should_display && current_config.tray.display_mode != "average" {
                         continue;
                     }
 

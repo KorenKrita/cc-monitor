@@ -108,7 +108,7 @@ impl Database {
 
         let mut param_idx = 2;
 
-        if let Some(_) = until {
+        if until.is_some() {
             sql.push_str(&format!(" AND timestamp < ?{}", param_idx));
             param_idx += 1;
         }
