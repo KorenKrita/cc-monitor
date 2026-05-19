@@ -49,8 +49,8 @@ fn main() {
                 }
                 _ => tray::format_idle_tray_text(&config.tray),
             };
-            let icon = tauri::image::Image::from_bytes(include_bytes!("../icons/tray-icon.png")).expect("bad icon");
-            let _tray = TrayIconBuilder::with_id("main")
+            let icon = tauri::image::Image::new_owned(vec![0,0,0,0], 1, 1);
+            let tray = TrayIconBuilder::with_id("main")
                 .icon(icon)
                 .icon_as_template(true)
                 .show_menu_on_left_click(false)
@@ -71,6 +71,7 @@ fn main() {
                     }
                 })
                 .build(app)?;
+            let _ = tray.set_icon(None);
 
             // Hide window on focus lost
             let main_window = app.get_webview_window("main").unwrap();
