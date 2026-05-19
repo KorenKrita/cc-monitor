@@ -10,7 +10,7 @@ interface Props {
 const tabs: { key: TimeRange; label: string }[] = [
   { key: "1h", label: "1h" },
   { key: "today", label: "Today" },
-  { key: "yesterday", label: "Yest." },
+  { key: "yesterday", label: "Yesterday" },
 ];
 
 export function TimeRangeTabs({ value, onChange, theme }: Props) {

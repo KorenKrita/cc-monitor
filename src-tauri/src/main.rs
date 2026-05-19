@@ -23,6 +23,13 @@ fn main() {
         .plugin(tauri_plugin_shell::init())
         .manage(AppState { db: db.clone() })
         .setup(move |app| {
+            // Hide from dock
+            #[cfg(target_os = "macos")]
+            {
+                use tauri::ActivationPolicy;
+                let _ = app.handle().set_activation_policy(ActivationPolicy::Accessory);
+            }
+
             let handle = app.handle().clone();
             let db_clone = db.clone();
 

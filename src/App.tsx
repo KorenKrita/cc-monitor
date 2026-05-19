@@ -52,18 +52,18 @@ export default function App() {
 
   return (
     <div style={{ background: theme.bg, color: theme.foreground, fontFamily: "'Fira Sans', system-ui, sans-serif", padding: 20, height: "100vh", overflow: "hidden", position: "relative" }}>
-      {/* Close button - top left red dot */}
+      {/* Close button - top left green dot */}
       <button
         onClick={() => invoke("hide_window")}
         style={{
           position: "absolute", top: 6, left: 6,
           width: 12, height: 12, borderRadius: "50%",
-          background: "#EF4444", border: "none",
+          background: "#22C55E", border: "none",
           cursor: "pointer", padding: 0,
           display: "flex", alignItems: "center", justifyContent: "center",
           fontSize: 8, color: "transparent", lineHeight: 1,
         }}
-        onMouseEnter={(e) => { e.currentTarget.style.color = "#7F1D1D"; }}
+        onMouseEnter={(e) => { e.currentTarget.style.color = "#064E3B"; }}
         onMouseLeave={(e) => { e.currentTarget.style.color = "transparent"; }}
         title="Close"
       >×</button>
@@ -81,14 +81,14 @@ export default function App() {
         title="Settings"
       >⚙</button>
 
-      {/* Quit button - bottom left */}
+      {/* Quit button - bottom left corner */}
       <button
         onClick={() => invoke("quit_app")}
         style={{
-          position: "absolute", bottom: 12, left: 12,
-          width: 18, height: 18, borderRadius: "50%",
+          position: "absolute", bottom: 6, left: 6,
+          width: 16, height: 16, borderRadius: "50%",
           background: "transparent", border: "none",
-          color: "#EF4444", fontSize: 14, cursor: "pointer",
+          color: "#EF4444", fontSize: 12, cursor: "pointer",
           display: "flex", alignItems: "center", justifyContent: "center",
         }}
         title="Quit"
