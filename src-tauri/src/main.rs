@@ -2,7 +2,7 @@
 
 use std::sync::Arc;
 use tauri::{
-    tray::TrayIconBuilder, Emitter, Manager,
+    tray::TrayIconBuilder, Emitter, Manager, WindowEvent,
 };
 use tokio::sync::mpsc;
 
@@ -32,7 +32,8 @@ fn main() {
                 .title("⬡")
                 .tooltip("CC Monitor")
                 .on_tray_icon_event(move |tray_icon, event| {
-                    if let tauri::tray::TrayIconEvent::Click { .. } = event {
+                    use tauri::tray::{TrayIconEvent, MouseButton, MouseButtonState};
+                    if let TrayIconEvent::Click { button: MouseButton::Left, button_state: MouseButtonState::Up, .. } = event {
                         let app = tray_icon.app_handle();
                         if let Some(window) = app.get_webview_window("main") {
                             if window.is_visible().unwrap_or(false) {
@@ -45,6 +46,15 @@ fn main() {
                     }
                 })
                 .build(app)?;
+
+            // Hide window on focus lost
+            let main_window = app.get_webview_window("main").unwrap();
+            let win_clone = main_window.clone();
+            main_window.on_window_event(move |event| {
+                if let WindowEvent::Focused(false) = event {
+                    let _ = win_clone.hide();
+                }
+            });
 
             // Start file watcher
             let (tx, mut rx) = mpsc::unbounded_channel();
@@ -86,6 +96,7 @@ fn main() {
             commands::get_models,
             commands::get_config,
             commands::set_config,
+            commands::hide_window,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -32,3 +32,8 @@ pub fn get_config() -> Result<Config, String> {
 pub fn set_config(config: Config) -> Result<(), String> {
     save_config(&config)
 }
+
+#[tauri::command]
+pub fn hide_window(window: tauri::WebviewWindow) -> Result<(), String> {
+    window.hide().map_err(|e| e.to_string())
+}

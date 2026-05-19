@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { invoke } from "@tauri-apps/api/core";
 import { useSettings } from "./hooks/useSettings";
 import { useMonitorData } from "./hooks/useMonitorData";
 import { darkTheme, lightTheme, ThemeTokens } from "./theme";
@@ -37,7 +38,20 @@ export default function App() {
     <div style={{ background: theme.bg, color: theme.foreground, fontFamily: "'Fira Sans', system-ui, sans-serif", padding: 20, height: "100vh", overflow: "hidden" }}>
       <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 14 }}>
         <MetricTabs value={metric} onChange={setMetric} theme={theme} />
-        <TimeRangeTabs value={timeRange} onChange={setTimeRange} theme={theme} />
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <TimeRangeTabs value={timeRange} onChange={setTimeRange} theme={theme} />
+          <button
+            onClick={() => invoke("hide_window")}
+            style={{
+              width: 20, height: 20, borderRadius: 4,
+              background: "transparent", border: `1px solid ${theme.border}`,
+              color: theme.muted, fontSize: 12, cursor: "pointer",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              lineHeight: 1,
+            }}
+            title="Close"
+          >×</button>
+        </div>
       </div>
 
       <div style={{ display: "flex", gap: 14, height: "calc(100% - 50px)" }}>
