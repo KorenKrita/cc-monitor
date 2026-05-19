@@ -41,7 +41,7 @@ Claude Code 会话日志：`~/.claude/projects/*/*.jsonl`
 - 解析 `type: "assistant"` 条目，提取 model + usage
 - TTFT/duration 计算：当前 assistant timestamp - 前一条 user timestamp（同 session 内）
 - 新 session 文件出现时自动纳入监听
-- 多 session 并发时全部采集，按 model 聚合
+- 多 session 并发时全部采集，统一按 model 聚合（不区分 session）
 
 ## 数据模型
 
@@ -49,7 +49,6 @@ Claude Code 会话日志：`~/.claude/projects/*/*.jsonl`
 CREATE TABLE requests (
   id INTEGER PRIMARY KEY,
   timestamp TEXT NOT NULL,
-  session_id TEXT NOT NULL,
   model TEXT NOT NULL,
   input_tokens INTEGER NOT NULL,
   output_tokens INTEGER NOT NULL,
@@ -76,6 +75,7 @@ CREATE INDEX idx_model ON requests(model);
 
 ```json
 {
+  "theme": "system",
   "tray": {
     "items": ["out_rate", "in_rate", "ttft"],
     "model_filter": "last",
@@ -92,29 +92,78 @@ CREATE INDEX idx_model ON requests(model);
 ### 布局（~480px 宽）
 
 ```
-┌────────┬────────────────────────────────┐
-│ Model  │  ECharts 折线图                │
-│ Filter │  (多系列，不同颜色)            │
-│ ────── │                                │
-│ □ All  │                                │
-│ ■ Opus │                                │
-│ □ Son. │ ┌──────────────────────────┐   │
-│ □ Hai. │ │ [1h]  [Today] [Yesterday]│   │
-│        │ └──────────────────────────┘   │
-└────────┴────────────────────────────────┘
+┌─────────────────────────────────────────────┐
+│ [Out] [In] [TTFT]     [1h] [Today] [Yest.] │
+├────────┬────────────────────────────────────┤
+│ Models │  ECharts 折线图（波动，非累计）    │
+│ ────── │  Y轴: tok/req 或 seconds           │
+│ □ All  │                                    │
+│ ■ Opus │  ~~~~/\~~~/\~~~~  (紫)             │
+│ ■ Son. │  ~~~/\~~/\~~~~~   (绿)             │
+│ □ Hai. │  ~~--~--~--~~--   (琥珀,虚线)      │
+│ ────── │                                    │
+│ Latest │  Hover: 竖虚线 + tooltip           │
+│  847   │  [14:00] [14:15] [14:30] [15:00]   │
+│ tok/req│                                    │
+└────────┴────────────────────────────────────┘
 ```
 
-### 交互
+### 指标切换
 
-- **左侧**：模型 checkbox 列表，每个模型带颜色标识点
-- **右侧**：ECharts 折线图 + 时间段 tab
-- **不选模型时**：所有模型各自一条折线，不同颜色叠加
-- **选择模型时**：只显示选中模型
-- **时间段**：
-  - 1h：最近一小时，X 轴按分钟
-  - Today：今天，X 轴按小时
-  - Yesterday：昨天，X 轴按小时
-- **Tooltip**：悬停显示精确数值（model, tokens, time）
+顶部左侧 tab 切换当前图表展示的指标：
+- **Out**: output tokens/request（默认）
+- **In**: input tokens/request
+- **TTFT**: 响应耗时（seconds）
+
+### 时间范围
+
+顶部右侧 tab：
+- **1h**: 最近一小时，X 轴按分钟
+- **Today**: 今天，X 轴按小时
+- **Yesterday**: 昨天，X 轴按小时
+
+### 模型筛选
+
+- 左侧 checkbox 列表，每个模型带颜色标识点
+- 不选时：所有模型各自一条折线，不同颜色叠加
+- 选择时：只显示选中模型
+- 左下角显示 Latest 值（最近一次请求的当前指标值）
+
+### Tooltip
+
+- 鼠标划过图表时显示竖虚线
+- 各模型在该时间点的圆点标记
+- 浮层显示：时间 + 各模型精确数值
+
+### 主题
+
+支持三种主题，配置项 `"theme": "system" | "dark" | "light"`，默认 `"system"`。
+
+**Dark 主题色值：**
+- Background: `#0E1223`
+- Card/Chart bg: `#1A1E2F`
+- Border/Grid: `#272F42`
+- Muted text: `#94A3B8`
+- Foreground: `#F8FAFC`
+
+**Light 主题色值：**
+- Background: `#FAFBFC`
+- Card/Chart bg: `#FFFFFF`
+- Border/Grid: `#E2E8F0`
+- Muted text: `#94A3B8`
+- Foreground: `#1E293B`
+
+**模型颜色：**
+| Model  | Dark       | Light      | 线型   |
+|--------|-----------|-----------|--------|
+| Opus   | `#6366f1` | `#4F46E5` | 实线   |
+| Sonnet | `#22C55E` | `#16A34A` | 实线   |
+| Haiku  | `#F59E0B` | `#D97706` | 虚线   |
+
+### 字体
+
+- 数字/数据: Fira Code (monospace)
+- UI 标签: Fira Sans / system-ui
 
 ## 架构流程
 

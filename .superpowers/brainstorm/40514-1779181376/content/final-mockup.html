@@ -1,0 +1,205 @@
+<h2>CC Monitor — 完整版 Mockup</h2>
+<p class="subtitle">v2 布局 + 双主题 + Tooltip。左侧模型筛选保留。</p>
+
+<div class="split">
+  <div class="mockup">
+    <div class="mockup-header">Dark Theme</div>
+    <div class="mockup-body" style="padding: 0;">
+      <div style="background: #0E1223; border-radius: 12px; padding: 20px; color: #F8FAFC; font-family: 'Fira Sans', -apple-system, sans-serif; width: 100%;">
+        <!-- Header: metric tabs + time range -->
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+          <div style="display: flex; gap: 2px; background: #1A1E2F; border-radius: 8px; padding: 3px;">
+            <div style="background: #272F42; padding: 4px 10px; border-radius: 6px; font-size: 10px; color: #22C55E; font-weight: 500;">Out</div>
+            <div style="padding: 4px 10px; font-size: 10px; color: #64748B;">In</div>
+            <div style="padding: 4px 10px; font-size: 10px; color: #64748B;">TTFT</div>
+          </div>
+          <div style="display: flex; gap: 2px; background: #1A1E2F; border-radius: 8px; padding: 3px;">
+            <div style="background: #272F42; padding: 4px 8px; border-radius: 6px; font-size: 10px; color: #F8FAFC;">1h</div>
+            <div style="padding: 4px 8px; font-size: 10px; color: #64748B;">Today</div>
+            <div style="padding: 4px 8px; font-size: 10px; color: #64748B;">Yest.</div>
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 14px;">
+          <!-- Left: Model Filter -->
+          <div style="width: 90px; padding-right: 14px; border-right: 1px solid #272F42;">
+            <div style="font-size: 9px; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px;">Models</div>
+            <div style="display: flex; flex-direction: column; gap: 8px;">
+              <label style="display: flex; align-items: center; gap: 6px;">
+                <div style="width: 10px; height: 10px; border-radius: 2px; background: #272F42; border: 1.5px solid #475569;"></div>
+                <span style="font-size: 10px; color: #94A3B8;">All</span>
+              </label>
+              <label style="display: flex; align-items: center; gap: 6px;">
+                <div style="width: 10px; height: 10px; border-radius: 2px; background: #6366f1;"></div>
+                <span style="font-size: 10px; color: #F8FAFC;">Opus</span>
+              </label>
+              <label style="display: flex; align-items: center; gap: 6px;">
+                <div style="width: 10px; height: 10px; border-radius: 2px; background: #22C55E;"></div>
+                <span style="font-size: 10px; color: #F8FAFC;">Sonnet</span>
+              </label>
+              <label style="display: flex; align-items: center; gap: 6px;">
+                <div style="width: 10px; height: 10px; border-radius: 2px; background: #F59E0B;"></div>
+                <span style="font-size: 10px; color: #94A3B8;">Haiku</span>
+              </label>
+            </div>
+            <!-- Latest value -->
+            <div style="margin-top: 14px; padding-top: 10px; border-top: 1px solid #272F42;">
+              <div style="font-size: 8px; color: #64748B; text-transform: uppercase;">Latest</div>
+              <div style="font-size: 16px; font-family: 'Fira Code', monospace; color: #22C55E; font-weight: 600; margin-top: 2px;">847</div>
+              <div style="font-size: 8px; color: #64748B;">tok/req</div>
+            </div>
+          </div>
+
+          <!-- Right: Chart -->
+          <div style="flex: 1; position: relative;">
+            <div style="background: #1A1E2F; border-radius: 8px; padding: 10px; height: 140px; position: relative; overflow: visible;">
+              <!-- Y-axis -->
+              <div style="position: absolute; top: 10px; left: 10px; font-size: 8px; color: #475569; font-family: 'Fira Code', monospace;">2k</div>
+              <div style="position: absolute; top: 45px; left: 10px; font-size: 8px; color: #475569; font-family: 'Fira Code', monospace;">1k</div>
+              <div style="position: absolute; top: 80px; left: 10px; font-size: 8px; color: #475569; font-family: 'Fira Code', monospace;">500</div>
+              <div style="position: absolute; top: 115px; left: 14px; font-size: 8px; color: #475569; font-family: 'Fira Code', monospace;">0</div>
+              <!-- Grid -->
+              <div style="position: absolute; top: 15px; left: 28px; right: 10px; height: 1px; background: #272F42;"></div>
+              <div style="position: absolute; top: 50px; left: 28px; right: 10px; height: 1px; background: #272F42;"></div>
+              <div style="position: absolute; top: 85px; left: 28px; right: 10px; height: 1px; background: #272F42;"></div>
+              <div style="position: absolute; top: 120px; left: 28px; right: 10px; height: 1px; background: #272F42;"></div>
+              <!-- Lines -->
+              <svg viewBox="0 0 260 120" style="width: calc(100% - 30px); height: calc(100% - 20px); position: absolute; top: 8px; left: 30px;">
+                <polyline points="0,75 25,40 50,55 75,25 100,50 125,20 150,45 175,30 200,60 225,35 260,25" fill="none" stroke="#6366f1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <polyline points="0,90 25,65 50,75 75,50 100,65 125,45 150,60 175,70 200,55 225,60 260,45" fill="none" stroke="#22C55E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <polyline points="0,105 25,95 50,100 75,90 100,95 125,85 150,92 175,98 200,88 225,92 260,85" fill="none" stroke="#F59E0B" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="4,3"/>
+                <!-- Hover line -->
+                <line x1="150" y1="0" x2="150" y2="120" stroke="#475569" stroke-width="1" stroke-dasharray="2,2"/>
+                <circle cx="150" cy="45" r="4" fill="#6366f1" stroke="#0E1223" stroke-width="2"/>
+                <circle cx="150" cy="60" r="4" fill="#22C55E" stroke="#0E1223" stroke-width="2"/>
+                <circle cx="150" cy="92" r="4" fill="#F59E0B" stroke="#0E1223" stroke-width="2"/>
+              </svg>
+              <!-- Tooltip -->
+              <div style="position: absolute; top: 2px; left: calc(30px + 52%); background: #272F42; border: 1px solid #475569; border-radius: 6px; padding: 6px 10px; font-size: 9px; white-space: nowrap; box-shadow: 0 4px 12px rgba(0,0,0,0.5); z-index: 10;">
+                <div style="color: #94A3B8; margin-bottom: 3px; font-family: 'Fira Code', monospace;">14:32</div>
+                <div style="display: flex; align-items: center; gap: 4px; margin-bottom: 2px;">
+                  <div style="width: 5px; height: 5px; border-radius: 50%; background: #6366f1;"></div>
+                  <span style="color: #F8FAFC; font-family: 'Fira Code', monospace;">Opus: 1,247</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 4px; margin-bottom: 2px;">
+                  <div style="width: 5px; height: 5px; border-radius: 50%; background: #22C55E;"></div>
+                  <span style="color: #F8FAFC; font-family: 'Fira Code', monospace;">Sonnet: 683</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 4px;">
+                  <div style="width: 5px; height: 5px; border-radius: 50%; background: #F59E0B;"></div>
+                  <span style="color: #F8FAFC; font-family: 'Fira Code', monospace;">Haiku: 312</span>
+                </div>
+              </div>
+              <!-- X-axis -->
+              <div style="position: absolute; bottom: 2px; left: 30px; right: 10px; display: flex; justify-content: space-between;">
+                <span style="font-size: 8px; color: #475569; font-family: 'Fira Code', monospace;">14:00</span>
+                <span style="font-size: 8px; color: #475569; font-family: 'Fira Code', monospace;">14:15</span>
+                <span style="font-size: 8px; color: #475569; font-family: 'Fira Code', monospace;">14:30</span>
+                <span style="font-size: 8px; color: #475569; font-family: 'Fira Code', monospace;">14:45</span>
+                <span style="font-size: 8px; color: #475569; font-family: 'Fira Code', monospace;">15:00</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="mockup">
+    <div class="mockup-header">Light Theme</div>
+    <div class="mockup-body" style="padding: 0;">
+      <div style="background: #FAFBFC; border-radius: 12px; padding: 20px; color: #1E293B; font-family: 'Fira Sans', -apple-system, sans-serif; width: 100%; border: 1px solid #E2E8F0;">
+        <!-- Header -->
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+          <div style="display: flex; gap: 2px; background: #F1F5F9; border-radius: 8px; padding: 3px;">
+            <div style="background: #FFFFFF; padding: 4px 10px; border-radius: 6px; font-size: 10px; color: #16A34A; font-weight: 500; box-shadow: 0 1px 2px rgba(0,0,0,0.06);">Out</div>
+            <div style="padding: 4px 10px; font-size: 10px; color: #94A3B8;">In</div>
+            <div style="padding: 4px 10px; font-size: 10px; color: #94A3B8;">TTFT</div>
+          </div>
+          <div style="display: flex; gap: 2px; background: #F1F5F9; border-radius: 8px; padding: 3px;">
+            <div style="background: #FFFFFF; padding: 4px 8px; border-radius: 6px; font-size: 10px; color: #1E293B; box-shadow: 0 1px 2px rgba(0,0,0,0.06);">1h</div>
+            <div style="padding: 4px 8px; font-size: 10px; color: #94A3B8;">Today</div>
+            <div style="padding: 4px 8px; font-size: 10px; color: #94A3B8;">Yest.</div>
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 14px;">
+          <!-- Left: Model Filter -->
+          <div style="width: 90px; padding-right: 14px; border-right: 1px solid #E2E8F0;">
+            <div style="font-size: 9px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px;">Models</div>
+            <div style="display: flex; flex-direction: column; gap: 8px;">
+              <label style="display: flex; align-items: center; gap: 6px;">
+                <div style="width: 10px; height: 10px; border-radius: 2px; background: #F1F5F9; border: 1.5px solid #CBD5E1;"></div>
+                <span style="font-size: 10px; color: #64748B;">All</span>
+              </label>
+              <label style="display: flex; align-items: center; gap: 6px;">
+                <div style="width: 10px; height: 10px; border-radius: 2px; background: #4F46E5;"></div>
+                <span style="font-size: 10px; color: #1E293B;">Opus</span>
+              </label>
+              <label style="display: flex; align-items: center; gap: 6px;">
+                <div style="width: 10px; height: 10px; border-radius: 2px; background: #16A34A;"></div>
+                <span style="font-size: 10px; color: #1E293B;">Sonnet</span>
+              </label>
+              <label style="display: flex; align-items: center; gap: 6px;">
+                <div style="width: 10px; height: 10px; border-radius: 2px; background: #D97706;"></div>
+                <span style="font-size: 10px; color: #64748B;">Haiku</span>
+              </label>
+            </div>
+            <!-- Latest -->
+            <div style="margin-top: 14px; padding-top: 10px; border-top: 1px solid #E2E8F0;">
+              <div style="font-size: 8px; color: #94A3B8; text-transform: uppercase;">Latest</div>
+              <div style="font-size: 16px; font-family: 'Fira Code', monospace; color: #16A34A; font-weight: 600; margin-top: 2px;">847</div>
+              <div style="font-size: 8px; color: #94A3B8;">tok/req</div>
+            </div>
+          </div>
+
+          <!-- Right: Chart -->
+          <div style="flex: 1;">
+            <div style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 8px; padding: 10px; height: 140px; position: relative; overflow: visible;">
+              <!-- Grid -->
+              <div style="position: absolute; top: 15px; left: 28px; right: 10px; height: 1px; background: #F1F5F9;"></div>
+              <div style="position: absolute; top: 50px; left: 28px; right: 10px; height: 1px; background: #F1F5F9;"></div>
+              <div style="position: absolute; top: 85px; left: 28px; right: 10px; height: 1px; background: #F1F5F9;"></div>
+              <div style="position: absolute; top: 120px; left: 28px; right: 10px; height: 1px; background: #F1F5F9;"></div>
+              <!-- Lines -->
+              <svg viewBox="0 0 260 120" style="width: calc(100% - 30px); height: calc(100% - 20px); position: absolute; top: 8px; left: 30px;">
+                <polyline points="0,75 25,40 50,55 75,25 100,50 125,20 150,45 175,30 200,60 225,35 260,25" fill="none" stroke="#4F46E5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <polyline points="0,90 25,65 50,75 75,50 100,65 125,45 150,60 175,70 200,55 225,60 260,45" fill="none" stroke="#16A34A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <polyline points="0,105 25,95 50,100 75,90 100,95 125,85 150,92 175,98 200,88 225,92 260,85" fill="none" stroke="#D97706" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="4,3"/>
+                <!-- Hover -->
+                <line x1="150" y1="0" x2="150" y2="120" stroke="#CBD5E1" stroke-width="1" stroke-dasharray="2,2"/>
+                <circle cx="150" cy="45" r="4" fill="#4F46E5" stroke="#FFFFFF" stroke-width="2"/>
+                <circle cx="150" cy="60" r="4" fill="#16A34A" stroke="#FFFFFF" stroke-width="2"/>
+                <circle cx="150" cy="92" r="4" fill="#D97706" stroke="#FFFFFF" stroke-width="2"/>
+              </svg>
+              <!-- Tooltip -->
+              <div style="position: absolute; top: 2px; left: calc(30px + 52%); background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 6px; padding: 6px 10px; font-size: 9px; white-space: nowrap; box-shadow: 0 4px 12px rgba(0,0,0,0.08); z-index: 10;">
+                <div style="color: #64748B; margin-bottom: 3px; font-family: 'Fira Code', monospace;">14:32</div>
+                <div style="display: flex; align-items: center; gap: 4px; margin-bottom: 2px;">
+                  <div style="width: 5px; height: 5px; border-radius: 50%; background: #4F46E5;"></div>
+                  <span style="color: #1E293B; font-family: 'Fira Code', monospace;">Opus: 1,247</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 4px; margin-bottom: 2px;">
+                  <div style="width: 5px; height: 5px; border-radius: 50%; background: #16A34A;"></div>
+                  <span style="color: #1E293B; font-family: 'Fira Code', monospace;">Sonnet: 683</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 4px;">
+                  <div style="width: 5px; height: 5px; border-radius: 50%; background: #D97706;"></div>
+                  <span style="color: #1E293B; font-family: 'Fira Code', monospace;">Haiku: 312</span>
+                </div>
+              </div>
+              <!-- X-axis -->
+              <div style="position: absolute; bottom: 2px; left: 30px; right: 10px; display: flex; justify-content: space-between;">
+                <span style="font-size: 8px; color: #94A3B8; font-family: 'Fira Code', monospace;">14:00</span>
+                <span style="font-size: 8px; color: #94A3B8; font-family: 'Fira Code', monospace;">14:15</span>
+                <span style="font-size: 8px; color: #94A3B8; font-family: 'Fira Code', monospace;">14:30</span>
+                <span style="font-size: 8px; color: #94A3B8; font-family: 'Fira Code', monospace;">14:45</span>
+                <span style="font-size: 8px; color: #94A3B8; font-family: 'Fira Code', monospace;">15:00</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,99 @@
+<h2>CC Monitor — 设计系统 Mockup</h2>
+<p class="subtitle">基于 ui-ux-pro-max 推荐：Dark OLED + Fira Code/Sans + 开发者配色</p>
+
+<div class="cards">
+  <div class="card" data-choice="approved" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div style="background: #0E1223; border-radius: 12px; padding: 24px; color: #F8FAFC; font-family: 'Fira Sans', -apple-system, sans-serif; width: 460px;">
+        <!-- Header -->
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+          <div style="font-size: 13px; font-weight: 500; color: #94A3B8;">CC Monitor</div>
+          <div style="display: flex; gap: 4px;">
+            <div style="background: #1A1E2F; border: 1px solid #272F42; padding: 3px 10px; border-radius: 6px; font-size: 11px; color: #22C55E; font-family: 'Fira Code', monospace;">1h</div>
+            <div style="background: transparent; padding: 3px 10px; border-radius: 6px; font-size: 11px; color: #94A3B8;">Today</div>
+            <div style="background: transparent; padding: 3px 10px; border-radius: 6px; font-size: 11px; color: #94A3B8;">Yesterday</div>
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 16px;">
+          <!-- Left: Model Filter -->
+          <div style="width: 110px; padding-right: 16px; border-right: 1px solid #272F42;">
+            <div style="font-size: 10px; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px;">Models</div>
+            <div style="display: flex; flex-direction: column; gap: 10px;">
+              <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                <div style="width: 12px; height: 12px; border-radius: 3px; background: #272F42; border: 1px solid #475569;"></div>
+                <span style="font-size: 11px; color: #94A3B8;">All</span>
+              </label>
+              <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                <div style="width: 12px; height: 12px; border-radius: 3px; background: #6366f1;"></div>
+                <span style="font-size: 11px; color: #F8FAFC;">Opus</span>
+              </label>
+              <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                <div style="width: 12px; height: 12px; border-radius: 3px; background: #22C55E;"></div>
+                <span style="font-size: 11px; color: #F8FAFC;">Sonnet</span>
+              </label>
+              <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                <div style="width: 12px; height: 12px; border-radius: 3px; background: #F59E0B;"></div>
+                <span style="font-size: 11px; color: #94A3B8;">Haiku</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Right: Chart Area -->
+          <div style="flex: 1;">
+            <!-- Stats Row -->
+            <div style="display: flex; gap: 16px; margin-bottom: 12px;">
+              <div style="background: #1A1E2F; border-radius: 8px; padding: 8px 12px; flex: 1;">
+                <div style="font-size: 9px; color: #64748B; text-transform: uppercase;">Output</div>
+                <div style="font-size: 16px; font-family: 'Fira Code', monospace; color: #22C55E; font-weight: 600;">45.2k</div>
+              </div>
+              <div style="background: #1A1E2F; border-radius: 8px; padding: 8px 12px; flex: 1;">
+                <div style="font-size: 9px; color: #64748B; text-transform: uppercase;">Input</div>
+                <div style="font-size: 16px; font-family: 'Fira Code', monospace; color: #6366f1; font-weight: 600;">128k</div>
+              </div>
+              <div style="background: #1A1E2F; border-radius: 8px; padding: 8px 12px; flex: 1;">
+                <div style="font-size: 9px; color: #64748B; text-transform: uppercase;">TTFT</div>
+                <div style="font-size: 16px; font-family: 'Fira Code', monospace; color: #F8FAFC; font-weight: 600;">2.3s</div>
+              </div>
+            </div>
+
+            <!-- Chart -->
+            <div style="background: #1A1E2F; border-radius: 8px; padding: 12px; height: 120px; position: relative; overflow: hidden;">
+              <!-- Grid lines -->
+              <div style="position: absolute; top: 30px; left: 12px; right: 12px; height: 1px; background: #272F42;"></div>
+              <div style="position: absolute; top: 60px; left: 12px; right: 12px; height: 1px; background: #272F42;"></div>
+              <div style="position: absolute; top: 90px; left: 12px; right: 12px; height: 1px; background: #272F42;"></div>
+              <!-- Lines -->
+              <svg viewBox="0 0 300 100" style="width: 100%; height: 100%; position: relative; z-index: 1;">
+                <!-- Opus line (purple) -->
+                <polyline points="0,70 30,65 60,50 90,55 120,35 150,40 180,25 210,30 240,20 270,15 300,10" fill="none" stroke="#6366f1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <polyline points="0,70 30,65 60,50 90,55 120,35 150,40 180,25 210,30 240,20 270,15 300,10" fill="url(#grad1)" stroke="none" opacity="0.15"/>
+                <!-- Sonnet line (green) -->
+                <polyline points="0,80 30,75 60,70 90,60 120,55 150,50 180,45 210,42 240,38 270,35 300,30" fill="none" stroke="#22C55E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <!-- Haiku line (amber) -->
+                <polyline points="0,90 30,88 60,85 90,82 120,78 150,80 180,75 210,72 240,70 270,68 300,65" fill="none" stroke="#F59E0B" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="4,3"/>
+                <defs>
+                  <linearGradient id="grad1" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stop-color="#6366f1"/>
+                    <stop offset="100%" stop-color="#6366f1" stop-opacity="0"/>
+                  </linearGradient>
+                </defs>
+              </svg>
+              <!-- Time labels -->
+              <div style="position: absolute; bottom: 4px; left: 12px; right: 12px; display: flex; justify-content: space-between;">
+                <span style="font-size: 9px; color: #475569; font-family: 'Fira Code', monospace;">14:00</span>
+                <span style="font-size: 9px; color: #475569; font-family: 'Fira Code', monospace;">14:20</span>
+                <span style="font-size: 9px; color: #475569; font-family: 'Fira Code', monospace;">14:40</span>
+                <span style="font-size: 9px; color: #475569; font-family: 'Fira Code', monospace;">15:00</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>Final Design</h3>
+      <p>Dark OLED 背景 (#0E1223)，Fira Code 数字，模型用紫/绿/琥珀区分，卡片 #1A1E2F，低对比度网格线。Haiku 用虚线区分。</p>
+    </div>
+  </div>
+</div>

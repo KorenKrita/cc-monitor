@@ -1,0 +1,96 @@
+<h2>CC Monitor — 修正版 Mockup</h2>
+<p class="subtitle">图表展示速率（波动），指标可切换，默认 Output 速率</p>
+
+<div class="cards">
+  <div class="card" data-choice="approved" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div style="background: #0E1223; border-radius: 12px; padding: 24px; color: #F8FAFC; font-family: 'Fira Sans', -apple-system, sans-serif; width: 460px;">
+        <!-- Header: metric tabs + time range -->
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+          <!-- Metric selector -->
+          <div style="display: flex; gap: 2px; background: #1A1E2F; border-radius: 8px; padding: 3px;">
+            <div style="background: #272F42; padding: 4px 12px; border-radius: 6px; font-size: 11px; color: #22C55E; font-weight: 500;">Out</div>
+            <div style="padding: 4px 12px; border-radius: 6px; font-size: 11px; color: #64748B;">In</div>
+            <div style="padding: 4px 12px; border-radius: 6px; font-size: 11px; color: #64748B;">TTFT</div>
+          </div>
+          <!-- Time range -->
+          <div style="display: flex; gap: 2px; background: #1A1E2F; border-radius: 8px; padding: 3px;">
+            <div style="background: #272F42; padding: 4px 10px; border-radius: 6px; font-size: 11px; color: #F8FAFC;">1h</div>
+            <div style="padding: 4px 10px; border-radius: 6px; font-size: 11px; color: #64748B;">Today</div>
+            <div style="padding: 4px 10px; border-radius: 6px; font-size: 11px; color: #64748B;">Yesterday</div>
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 16px;">
+          <!-- Left: Model Filter -->
+          <div style="width: 100px; padding-right: 16px; border-right: 1px solid #272F42;">
+            <div style="font-size: 10px; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px;">Models</div>
+            <div style="display: flex; flex-direction: column; gap: 10px;">
+              <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                <div style="width: 12px; height: 12px; border-radius: 3px; background: #272F42; border: 1.5px solid #475569;"></div>
+                <span style="font-size: 11px; color: #94A3B8;">All</span>
+              </label>
+              <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                <div style="width: 12px; height: 12px; border-radius: 3px; background: #6366f1;"></div>
+                <span style="font-size: 11px; color: #F8FAFC;">Opus</span>
+              </label>
+              <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                <div style="width: 12px; height: 12px; border-radius: 3px; background: #22C55E;"></div>
+                <span style="font-size: 11px; color: #F8FAFC;">Sonnet</span>
+              </label>
+              <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                <div style="width: 12px; height: 12px; border-radius: 3px; background: #F59E0B;"></div>
+                <span style="font-size: 11px; color: #94A3B8;">Haiku</span>
+              </label>
+            </div>
+
+            <!-- Current value -->
+            <div style="margin-top: 20px; padding-top: 12px; border-top: 1px solid #272F42;">
+              <div style="font-size: 9px; color: #64748B; text-transform: uppercase;">Latest</div>
+              <div style="font-size: 18px; font-family: 'Fira Code', monospace; color: #22C55E; font-weight: 600; margin-top: 4px;">847</div>
+              <div style="font-size: 9px; color: #64748B;">tok/req</div>
+            </div>
+          </div>
+
+          <!-- Right: Chart Area -->
+          <div style="flex: 1;">
+            <!-- Chart - fluctuating lines (rate per request) -->
+            <div style="background: #1A1E2F; border-radius: 8px; padding: 12px; height: 160px; position: relative; overflow: hidden;">
+              <!-- Y-axis labels -->
+              <div style="position: absolute; top: 12px; left: 12px; font-size: 9px; color: #475569; font-family: 'Fira Code', monospace;">2k</div>
+              <div style="position: absolute; top: 52px; left: 12px; font-size: 9px; color: #475569; font-family: 'Fira Code', monospace;">1k</div>
+              <div style="position: absolute; top: 92px; left: 12px; font-size: 9px; color: #475569; font-family: 'Fira Code', monospace;">500</div>
+              <div style="position: absolute; top: 132px; left: 12px; font-size: 9px; color: #475569; font-family: 'Fira Code', monospace;">0</div>
+              <!-- Grid lines -->
+              <div style="position: absolute; top: 18px; left: 30px; right: 12px; height: 1px; background: #272F42;"></div>
+              <div style="position: absolute; top: 58px; left: 30px; right: 12px; height: 1px; background: #272F42;"></div>
+              <div style="position: absolute; top: 98px; left: 30px; right: 12px; height: 1px; background: #272F42;"></div>
+              <div style="position: absolute; top: 138px; left: 30px; right: 12px; height: 1px; background: #272F42;"></div>
+              <!-- Fluctuating lines (rate goes up and down) -->
+              <svg viewBox="0 0 300 130" style="width: calc(100% - 24px); height: 100%; position: absolute; top: 8px; left: 32px;">
+                <!-- Opus (purple) - higher rate, more variance -->
+                <polyline points="0,80 20,45 40,60 60,30 80,55 100,25 120,50 140,35 160,65 180,40 200,20 220,45 240,30 260,55 280,25 300,40" fill="none" stroke="#6366f1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <!-- Sonnet (green) - medium rate -->
+                <polyline points="0,95 20,70 40,85 60,60 80,75 100,55 120,70 140,80 160,60 180,75 200,50 220,65 240,55 260,70 280,60 300,50" fill="none" stroke="#22C55E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <!-- Haiku (amber) - lower rate, dashed -->
+                <polyline points="0,110 20,100 40,105 60,95 80,100 100,90 120,95 140,105 160,90 180,100 200,85 220,95 240,90 260,100 280,88 300,92" fill="none" stroke="#F59E0B" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="4,3"/>
+              </svg>
+              <!-- Time labels -->
+              <div style="position: absolute; bottom: 4px; left: 32px; right: 12px; display: flex; justify-content: space-between;">
+                <span style="font-size: 9px; color: #475569; font-family: 'Fira Code', monospace;">14:00</span>
+                <span style="font-size: 9px; color: #475569; font-family: 'Fira Code', monospace;">14:15</span>
+                <span style="font-size: 9px; color: #475569; font-family: 'Fira Code', monospace;">14:30</span>
+                <span style="font-size: 9px; color: #475569; font-family: 'Fira Code', monospace;">14:45</span>
+                <span style="font-size: 9px; color: #475569; font-family: 'Fira Code', monospace;">15:00</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>修正版设计</h3>
+      <p>顶部左侧：指标切换（Out/In/TTFT），右侧：时间范围。图表折线波动表示每次请求的速率。左下角显示最新值。</p>
+    </div>
+  </div>
+</div>
