@@ -80,6 +80,11 @@ CREATE INDEX idx_model ON requests(model);
     "items": ["out_rate", "in_rate", "ttft"],
     "model_filter": "last",
     "model_whitelist": ["claude-opus-4-7", "claude-sonnet-4-6"]
+  },
+  "model_aliases": {
+    "claude-opus-4-7": "Opus",
+    "claude-sonnet-4-6": "Sonnet",
+    "claude-haiku-4-5": "Haiku"
   }
 }
 ```
@@ -154,11 +159,41 @@ CREATE INDEX idx_model ON requests(model);
 - Foreground: `#1E293B`
 
 **模型颜色：**
-| Model  | Dark       | Light      | 线型   |
-|--------|-----------|-----------|--------|
-| Opus   | `#6366f1` | `#4F46E5` | 实线   |
-| Sonnet | `#22C55E` | `#16A34A` | 实线   |
-| Haiku  | `#F59E0B` | `#D97706` | 虚线   |
+
+颜色不固定绑定模型。准备 10 色池，按模型首次出现时间顺序分配：
+
+| 序号 | Dark       | Light      |
+|------|-----------|-----------|
+| 1    | `#6366f1` | `#4F46E5` |
+| 2    | `#22C55E` | `#16A34A` |
+| 3    | `#F59E0B` | `#D97706` |
+| 4    | `#EC4899` | `#DB2777` |
+| 5    | `#06B6D4` | `#0891B2` |
+| 6    | `#F97316` | `#EA580C` |
+| 7    | `#8B5CF6` | `#7C3AED` |
+| 8    | `#14B8A6` | `#0D9488` |
+| 9    | `#EF4444` | `#DC2626` |
+| 10   | `#64748B` | `#475569` |
+
+线型：前 3 个实线，4-6 虚线，7+ 点线。
+
+模型列表排序：按记录到的使用次数从高到低。
+
+### 模型简称
+
+用户可在配置中定义模型别名用于面板展示：
+
+```json
+{
+  "model_aliases": {
+    "claude-opus-4-7": "Opus",
+    "claude-sonnet-4-6": "Sonnet",
+    "claude-haiku-4-5": "Haiku"
+  }
+}
+```
+
+未配置别名的模型显示原始 model 字符串。
 
 ### 字体
 

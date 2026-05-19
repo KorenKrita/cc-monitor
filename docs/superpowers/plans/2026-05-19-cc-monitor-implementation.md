@@ -148,6 +148,8 @@ pub struct Config {
     pub theme: String,
     #[serde(default)]
     pub tray: TrayConfig,
+    #[serde(default)]
+    pub model_aliases: std::collections::HashMap<String, String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -176,7 +178,7 @@ impl Default for TrayConfig {
 
 impl Default for Config {
     fn default() -> Self {
-        Self { theme: default_theme(), tray: TrayConfig::default() }
+        Self { theme: default_theme(), tray: TrayConfig::default(), model_aliases: std::collections::HashMap::new() }
     }
 }
 
@@ -368,8 +370,8 @@ impl Database {
 
     pub fn get_models(&self) -> Result<Vec<String>, String> {
         let conn = self.conn.lock().map_err(|e| e.to_string())?;
-        let mut stmt = conn.prepare("SELECT DISTINCT model FROM requests ORDER BY model").map_err(|e| e.to_string())?;
-        let rows = stmt.query_map([], |row| row.get(0)).map_err(|e| e.to_string())?;
+        let mut stmt = conn.prepare("SELECT model, COUNT(*) as cnt FROM requests GROUP BY model ORDER BY cnt DESC").map_err(|e| e.to_string())?;
+        let rows = stmt.query_map([], |row| row.get::<_, String>(0)).map_err(|e| e.to_string())?;
         rows.collect::<Result<Vec<_>, _>>().map_err(|e| e.to_string())
     }
 }
@@ -950,6 +952,7 @@ export interface Config {
     model_filter: "last" | "whitelist" | "all";
     model_whitelist: string[];
   };
+  model_aliases: Record<string, string>;
 }
 ```
 
@@ -985,32 +988,21 @@ export const lightTheme = {
   accentGreen: "#16A34A",
 } as const;
 
-export const modelColors = {
-  dark: {
-    "claude-opus-4-7": "#6366f1",
-    "claude-sonnet-4-6": "#22C55E",
-    "claude-haiku-4-5": "#F59E0B",
-  },
-  light: {
-    "claude-opus-4-7": "#4F46E5",
-    "claude-sonnet-4-6": "#16A34A",
-    "claude-haiku-4-5": "#D97706",
-  },
+// 10-color pool, assigned by model appearance order
+export const colorPool = {
+  dark: ["#6366f1", "#22C55E", "#F59E0B", "#EC4899", "#06B6D4", "#F97316", "#8B5CF6", "#14B8A6", "#EF4444", "#64748B"],
+  light: ["#4F46E5", "#16A34A", "#D97706", "#DB2777", "#0891B2", "#EA580C", "#7C3AED", "#0D9488", "#DC2626", "#475569"],
 } as const;
 
-export const modelLineStyles: Record<string, "solid" | "dashed"> = {
-  "claude-opus-4-7": "solid",
-  "claude-sonnet-4-6": "solid",
-  "claude-haiku-4-5": "dashed",
-};
+// Line style by color index: 0-2 solid, 3-5 dashed, 6+ dotted
+export function getLineStyle(index: number): "solid" | "dashed" | [number, number] {
+  if (index < 3) return "solid";
+  if (index < 6) return "dashed";
+  return [2, 3]; // dotted
+}
 
-export function getModelDisplayName(model: string): string {
-  const map: Record<string, string> = {
-    "claude-opus-4-7": "Opus",
-    "claude-sonnet-4-6": "Sonnet",
-    "claude-haiku-4-5": "Haiku",
-  };
-  return map[model] || model.split("-").slice(1, -1).join(" ");
+export function getModelDisplayName(model: string, aliases: Record<string, string>): string {
+  return aliases[model] || model;
 }
 
 export type ThemeTokens = typeof darkTheme;
@@ -1042,6 +1034,7 @@ export function useSettings() {
   const [config, setConfig] = useState<Config>({
     theme: "system",
     tray: { items: ["out_rate", "in_rate", "ttft"], model_filter: "last", model_whitelist: [] },
+    model_aliases: {},
   });
 
   useEffect(() => {
@@ -1130,7 +1123,7 @@ import { MetricTabs } from "./components/MetricTabs";
 import { TimeRangeTabs } from "./components/TimeRangeTabs";
 
 export default function App() {
-  const { resolvedTheme } = useSettings();
+  const { config, resolvedTheme } = useSettings();
   const { requests, models, latest, fetchData } = useMonitorData();
   const [metric, setMetric] = useState<Metric>("out_rate");
   const [timeRange, setTimeRange] = useState<TimeRange>("1h");
@@ -1172,14 +1165,17 @@ export default function App() {
           metricUnit={metricUnit}
           theme={theme}
           isDark={isDark}
+          aliases={config.model_aliases}
         />
         <Chart
           requests={requests}
           metric={metric}
           timeRange={timeRange}
           selectedModels={selectedModels}
+          models={models}
           theme={theme}
           isDark={isDark}
+          aliases={config.model_aliases}
         />
       </div>
     </div>
@@ -1324,20 +1320,21 @@ git add -A && git -c user.name="KorenKrita" -c user.email="KorenKrita@gmail.com"
 
 ```typescript
 // src/components/ModelFilter.tsx
-import { ThemeTokens, modelColors, getModelDisplayName } from "../theme";
+import { ThemeTokens, colorPool, getModelDisplayName } from "../theme";
 
 interface Props {
-  models: string[];
+  models: string[];  // already sorted by usage count desc
   selected: string[];
   onChange: (models: string[]) => void;
   latestValue: string;
   metricUnit: string;
   theme: ThemeTokens;
   isDark: boolean;
+  aliases: Record<string, string>;
 }
 
-export function ModelFilter({ models, selected, onChange, latestValue, metricUnit, theme, isDark }: Props) {
-  const colors = isDark ? modelColors.dark : modelColors.light;
+export function ModelFilter({ models, selected, onChange, latestValue, metricUnit, theme, isDark, aliases }: Props) {
+  const colors = isDark ? colorPool.dark : colorPool.light;
 
   const toggle = (model: string) => {
     if (selected.includes(model)) {
@@ -1355,8 +1352,8 @@ export function ModelFilter({ models, selected, onChange, latestValue, metricUni
         Models
       </div>
       <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-        {models.map((model) => {
-          const color = colors[model as keyof typeof colors] || theme.muted;
+        {models.map((model, index) => {
+          const color = colors[index % colors.length];
           return (
             <label
               key={model}
@@ -1372,7 +1369,7 @@ export function ModelFilter({ models, selected, onChange, latestValue, metricUni
                 fontSize: 10,
                 color: isSelected(model) ? theme.foreground : theme.muted,
               }}>
-                {getModelDisplayName(model)}
+                {getModelDisplayName(model, aliases)}
               </span>
             </label>
           );
@@ -1412,33 +1409,36 @@ git add -A && git -c user.name="KorenKrita" -c user.email="KorenKrita@gmail.com"
 import { useMemo } from "react";
 import ReactECharts from "echarts-for-react";
 import { RequestRecord, Metric, TimeRange } from "../types";
-import { ThemeTokens, modelColors, modelLineStyles, getModelDisplayName } from "../theme";
+import { ThemeTokens, colorPool, getLineStyle, getModelDisplayName } from "../theme";
 
 interface Props {
   requests: RequestRecord[];
   metric: Metric;
   timeRange: TimeRange;
   selectedModels: string[];
+  models: string[];  // sorted by usage count, determines color assignment
   theme: ThemeTokens;
   isDark: boolean;
+  aliases: Record<string, string>;
 }
 
-export function Chart({ requests, metric, timeRange, selectedModels, theme, isDark }: Props) {
-  const colors = isDark ? modelColors.dark : modelColors.light;
+export function Chart({ requests, metric, timeRange, selectedModels, models, theme, isDark, aliases }: Props) {
+  const colors = isDark ? colorPool.dark : colorPool.light;
 
   const option = useMemo(() => {
     const modelGroups = groupByModel(requests, selectedModels);
     const series = Object.entries(modelGroups).map(([model, records]) => {
-      const color = colors[model as keyof typeof colors] || theme.muted;
-      const lineStyle = modelLineStyles[model] || "solid";
+      const colorIndex = models.indexOf(model);
+      const color = colors[colorIndex % colors.length] || theme.muted;
+      const lineType = getLineStyle(colorIndex >= 0 ? colorIndex : 0);
       return {
-        name: getModelDisplayName(model),
+        name: getModelDisplayName(model, aliases),
         type: "line" as const,
         smooth: true,
         symbol: "none",
         lineStyle: {
           width: 2,
-          type: lineStyle,
+          type: lineType,
           color,
         },
         itemStyle: { color },
@@ -1511,7 +1511,7 @@ export function Chart({ requests, metric, timeRange, selectedModels, theme, isDa
       },
       series,
     };
-  }, [requests, metric, selectedModels, theme, isDark]);
+  }, [requests, metric, selectedModels, models, theme, isDark, aliases]);
 
   return (
     <div style={{ flex: 1, background: theme.card, borderRadius: 8, padding: 8, overflow: "hidden" }}>
