@@ -89,7 +89,7 @@ fn main() {
                 while let Some(request) = rx.recv().await {
                     // Skip old messages (from files modified but containing historical data)
                     if let Ok(ts) = chrono::DateTime::parse_from_rfc3339(&request.timestamp) {
-                        if ts < app_start - chrono::Duration::minutes(5) {
+                        if ts < app_start - chrono::Duration::hours(1) {
                             continue;
                         }
                     }

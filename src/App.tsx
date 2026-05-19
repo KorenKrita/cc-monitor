@@ -22,6 +22,17 @@ export default function App() {
   const theme: ThemeTokens = isDark ? darkTheme : lightTheme;
 
   useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === "w") {
+        e.preventDefault();
+        invoke("hide_window");
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
+  useEffect(() => {
     fetchData(timeRange, selectedModels.length > 0 ? selectedModels : undefined);
   }, [timeRange, selectedModels, fetchData]);
 
