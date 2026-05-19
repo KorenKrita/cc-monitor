@@ -1,12 +1,11 @@
 import { useMemo } from "react";
 import ReactECharts from "echarts-for-react";
-import { RequestRecord, Metric, TimeRange } from "../types";
+import { RequestRecord, Metric } from "../types";
 import { ThemeTokens, colorPool, getLineStyle, getModelDisplayName } from "../theme";
 
 interface Props {
   requests: RequestRecord[];
   metric: Metric;
-  timeRange: TimeRange;
   selectedModels: string[];
   models: string[];
   theme: ThemeTokens;
@@ -14,7 +13,7 @@ interface Props {
   aliases: Record<string, string>;
 }
 
-export function Chart({ requests, metric, timeRange, selectedModels, models, theme, isDark, aliases }: Props) {
+export function Chart({ requests, metric, selectedModels, models, theme, isDark, aliases }: Props) {
   const colors = isDark ? colorPool.dark : colorPool.light;
 
   const option = useMemo(() => {

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { invoke } from "@tauri-apps/api/core";
-import { Config, Theme } from "../types";
+import { Config } from "../types";
 
 export function useSettings() {
   const [config, setConfig] = useState<Config>({

@@ -54,7 +54,6 @@ export default function App() {
         <Chart
           requests={requests}
           metric={metric}
-          timeRange={timeRange}
           selectedModels={selectedModels}
           models={models}
           theme={theme}

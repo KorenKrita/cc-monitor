@@ -41,4 +41,6 @@ export function getModelDisplayName(model: string, aliases: Record<string, strin
   return aliases[model] || model;
 }
 
-export type ThemeTokens = typeof darkTheme;
+export type ThemeTokens = {
+  [K in keyof typeof darkTheme]: string;
+};
