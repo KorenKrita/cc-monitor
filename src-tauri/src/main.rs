@@ -1,6 +1,92 @@
-// Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
+use std::sync::Arc;
+use tauri::{
+    tray::TrayIconBuilder, Emitter, Manager,
+};
+use tokio::sync::mpsc;
+
+mod commands;
+mod config;
+mod db;
+mod parser;
+mod tray;
+mod watcher;
+
+use commands::AppState;
+
 fn main() {
-    cc_monitor_lib::run()
+    let db = Arc::new(db::Database::new().expect("Failed to initialize database"));
+    let config = config::load_config();
+
+    tauri::Builder::default()
+        .plugin(tauri_plugin_shell::init())
+        .manage(AppState { db: db.clone() })
+        .setup(move |app| {
+            let handle = app.handle().clone();
+            let db_clone = db.clone();
+            let config_clone = config.clone();
+
+            // Create tray
+            let _tray = TrayIconBuilder::new()
+                .title("⬡")
+                .tooltip("CC Monitor")
+                .on_tray_icon_event(move |tray_icon, event| {
+                    if let tauri::tray::TrayIconEvent::Click { .. } = event {
+                        let app = tray_icon.app_handle();
+                        if let Some(window) = app.get_webview_window("main") {
+                            if window.is_visible().unwrap_or(false) {
+                                let _ = window.hide();
+                            } else {
+                                let _ = window.show();
+                                let _ = window.set_focus();
+                            }
+                        }
+                    }
+                })
+                .build(app)?;
+
+            // Start file watcher
+            let (tx, mut rx) = mpsc::unbounded_channel();
+
+            std::thread::spawn(move || {
+                let _watcher = watcher::FileWatcher::start(tx)
+                    .expect("Failed to start file watcher");
+                std::thread::park();
+            });
+
+            // Process incoming requests
+            let handle_clone = handle.clone();
+            tauri::async_runtime::spawn(async move {
+                while let Some(request) = rx.recv().await {
+                    let _ = db_clone.insert_request(
+                        &request.timestamp,
+                        &request.model,
+                        request.input_tokens,
+                        request.output_tokens,
+                        request.cache_creation_tokens,
+                        request.cache_read_tokens,
+                        request.duration_ms,
+                    );
+
+                    let tray_text = tray::format_tray_text(&request, &config_clone.tray);
+                    if let Some(tray) = handle_clone.tray_by_id("main") {
+                        let _ = tray.set_title(Some(&tray_text));
+                    }
+
+                    let _ = handle_clone.emit("new-request", &request);
+                }
+            });
+
+            Ok(())
+        })
+        .invoke_handler(tauri::generate_handler![
+            commands::get_requests,
+            commands::get_latest,
+            commands::get_models,
+            commands::get_config,
+            commands::set_config,
+        ])
+        .run(tauri::generate_context!())
+        .expect("error while running tauri application");
 }

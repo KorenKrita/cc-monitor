@@ -1,51 +1,67 @@
-import { useState } from "react";
-import reactLogo from "./assets/react.svg";
-import { invoke } from "@tauri-apps/api/core";
-import "./App.css";
+import { useState, useEffect } from "react";
+import { useSettings } from "./hooks/useSettings";
+import { useMonitorData } from "./hooks/useMonitorData";
+import { darkTheme, lightTheme, ThemeTokens } from "./theme";
+import { Metric, TimeRange } from "./types";
+import { Chart } from "./components/Chart";
+import { ModelFilter } from "./components/ModelFilter";
+import { MetricTabs } from "./components/MetricTabs";
+import { TimeRangeTabs } from "./components/TimeRangeTabs";
 
-function App() {
-  const [greetMsg, setGreetMsg] = useState("");
-  const [name, setName] = useState("");
+export default function App() {
+  const { config, resolvedTheme } = useSettings();
+  const { requests, models, latest, fetchData } = useMonitorData();
+  const [metric, setMetric] = useState<Metric>("out_rate");
+  const [timeRange, setTimeRange] = useState<TimeRange>("1h");
+  const [selectedModels, setSelectedModels] = useState<string[]>([]);
 
-  async function greet() {
-    // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
-    setGreetMsg(await invoke("greet", { name }));
-  }
+  const theme: ThemeTokens = resolvedTheme() === "dark" ? darkTheme : lightTheme;
+  const isDark = resolvedTheme() === "dark";
+
+  useEffect(() => {
+    fetchData(timeRange, selectedModels.length > 0 ? selectedModels : undefined);
+  }, [timeRange, selectedModels, fetchData]);
+
+  const latestValue = (): string => {
+    if (!latest) return "—";
+    switch (metric) {
+      case "out_rate": return latest.output_tokens.toLocaleString();
+      case "in_rate": return latest.input_tokens.toLocaleString();
+      case "ttft": return latest.duration_ms ? `${(latest.duration_ms / 1000).toFixed(1)}s` : "—";
+    }
+  };
+
+  const metricUnit = metric === "ttft" ? "sec" : "tok/req";
 
   return (
-    <main className="container">
-      <h1>Welcome to Tauri + React</h1>
-
-      <div className="row">
-        <a href="https://vite.dev" target="_blank">
-          <img src="/vite.svg" className="logo vite" alt="Vite logo" />
-        </a>
-        <a href="https://tauri.app" target="_blank">
-          <img src="/tauri.svg" className="logo tauri" alt="Tauri logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
+    <div style={{ background: theme.bg, color: theme.foreground, fontFamily: "'Fira Sans', system-ui, sans-serif", padding: 20, height: "100vh", overflow: "hidden" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 14 }}>
+        <MetricTabs value={metric} onChange={setMetric} theme={theme} />
+        <TimeRangeTabs value={timeRange} onChange={setTimeRange} theme={theme} />
       </div>
-      <p>Click on the Tauri, Vite, and React logos to learn more.</p>
 
-      <form
-        className="row"
-        onSubmit={(e) => {
-          e.preventDefault();
-          greet();
-        }}
-      >
-        <input
-          id="greet-input"
-          onChange={(e) => setName(e.currentTarget.value)}
-          placeholder="Enter a name..."
+      <div style={{ display: "flex", gap: 14, height: "calc(100% - 50px)" }}>
+        <ModelFilter
+          models={models}
+          selected={selectedModels}
+          onChange={setSelectedModels}
+          latestValue={latestValue()}
+          metricUnit={metricUnit}
+          theme={theme}
+          isDark={isDark}
+          aliases={config.model_aliases}
         />
-        <button type="submit">Greet</button>
-      </form>
-      <p>{greetMsg}</p>
-    </main>
+        <Chart
+          requests={requests}
+          metric={metric}
+          timeRange={timeRange}
+          selectedModels={selectedModels}
+          models={models}
+          theme={theme}
+          isDark={isDark}
+          aliases={config.model_aliases}
+        />
+      </div>
+    </div>
   );
 }
-
-export default App;

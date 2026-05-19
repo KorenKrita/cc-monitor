@@ -27,7 +27,7 @@ struct UsagePayload {
     cache_read_input_tokens: Option<i64>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, serde::Serialize)]
 pub struct ParsedRequest {
     pub timestamp: String,
     pub model: String,
