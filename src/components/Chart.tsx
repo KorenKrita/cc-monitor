@@ -48,6 +48,9 @@ export function Chart({ requests, metric, timeRange, selectedModels, models, the
     });
 
     const xAxisMin = getXAxisMin(timeRange);
+    const xAxisMax = timeRange === "yesterday"
+      ? new Date(new Date().getFullYear(), new Date().getMonth(), new Date().getDate()).toISOString()
+      : undefined;
 
     return {
       animation: false,
@@ -55,15 +58,20 @@ export function Chart({ requests, metric, timeRange, selectedModels, models, the
       xAxis: {
         type: "time",
         min: xAxisMin,
+        max: xAxisMax,
         axisLine: { show: false },
         axisTick: { show: false },
+        splitNumber: timeRange === "1h" ? 6 : 4,
         axisLabel: {
           fontSize: 9,
           color: theme.tabInactiveText,
           fontFamily: "'Fira Code', monospace",
           formatter: (value: number) => {
             const d = new Date(value);
-            return `${d.getHours().toString().padStart(2, "0")}:${d.getMinutes().toString().padStart(2, "0")}`;
+            if (timeRange === "1h") {
+              return `${d.getHours().toString().padStart(2, "0")}:${d.getMinutes().toString().padStart(2, "0")}`;
+            }
+            return `${d.getHours()}`;
           },
         },
         splitLine: { show: false },

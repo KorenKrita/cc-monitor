@@ -27,7 +27,7 @@ fn main() {
             let db_clone = db.clone();
             let config_clone = config.clone();
 
-            // Create tray - show last known data or idle text
+            // Create tray with hexagon icon + text
             let initial_text = match db.get_latest() {
                 Ok(Some(record)) => {
                     let req = parser::ParsedRequest {
@@ -43,7 +43,7 @@ fn main() {
                 }
                 _ => tray::format_idle_tray_text(&config.tray),
             };
-            let icon = tauri::image::Image::new_owned(vec![0, 0, 0, 0], 1, 1);
+            let icon = tauri::image::Image::from_bytes(include_bytes!("../icons/tray-icon.png")).expect("bad icon");
             let _tray = TrayIconBuilder::new()
                 .icon(icon)
                 .icon_as_template(true)
