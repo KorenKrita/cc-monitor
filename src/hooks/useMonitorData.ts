@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { listen } from "@tauri-apps/api/event";
 import { invoke } from "@tauri-apps/api/core";
 import { RequestRecord, TimeRange } from "../types";
@@ -7,6 +7,7 @@ export function useMonitorData() {
   const [requests, setRequests] = useState<RequestRecord[]>([]);
   const [models, setModels] = useState<string[]>([]);
   const [latest, setLatest] = useState<RequestRecord | null>(null);
+  const currentRange = useRef<{ timeRange: TimeRange; modelFilter?: string[] }>({ timeRange: "1h" });
 
   useEffect(() => {
     const unlisten = listen<RequestRecord>("new-request", (event) => {
@@ -21,10 +22,25 @@ export function useMonitorData() {
     invoke<string[]>("get_models").then(setModels).catch(console.error);
     invoke<RequestRecord | null>("get_latest").then((r) => { if (r) setLatest(r); }).catch(console.error);
 
-    return () => { unlisten.then((fn) => fn()); };
+    // Refresh data when window becomes visible
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") {
+        const { timeRange, modelFilter } = currentRange.current;
+        fetchData(timeRange, modelFilter);
+        invoke<string[]>("get_models").then(setModels).catch(console.error);
+        invoke<RequestRecord | null>("get_latest").then((r) => { if (r) setLatest(r); }).catch(console.error);
+      }
+    };
+    document.addEventListener("visibilitychange", onVisibility);
+
+    return () => {
+      unlisten.then((fn) => fn());
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
   }, []);
 
   const fetchData = useCallback(async (timeRange: TimeRange, modelFilter?: string[]) => {
+    currentRange.current = { timeRange, modelFilter };
     const { since, until } = getTimeRange(timeRange);
     const data = await invoke<RequestRecord[]>("get_requests", {
       since,

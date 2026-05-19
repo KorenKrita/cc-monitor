@@ -36,7 +36,7 @@ pub fn start_polling(tx: mpsc::UnboundedSender<ParsedRequest>) {
         }
 
         loop {
-            std::thread::sleep(Duration::from_secs(1));
+            std::thread::sleep(Duration::from_millis(500));
 
             let files = match glob_jsonl_files(&claude_dir) {
                 Ok(f) => f,

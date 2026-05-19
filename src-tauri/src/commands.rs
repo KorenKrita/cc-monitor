@@ -1,3 +1,4 @@
+#[allow(unused_imports)]
 use tauri::{AppHandle, Manager, State};
 use std::sync::Arc;
 
