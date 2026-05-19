@@ -133,6 +133,7 @@ fn main() {
             commands::get_config,
             commands::set_config,
             commands::hide_window,
+            commands::quit_app,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

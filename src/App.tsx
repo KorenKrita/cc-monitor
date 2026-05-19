@@ -81,6 +81,19 @@ export default function App() {
         title="Settings"
       >⚙</button>
 
+      {/* Quit button - bottom left */}
+      <button
+        onClick={() => invoke("quit_app")}
+        style={{
+          position: "absolute", bottom: 12, left: 12,
+          width: 18, height: 18, borderRadius: "50%",
+          background: "transparent", border: "none",
+          color: "#EF4444", fontSize: 14, cursor: "pointer",
+          display: "flex", alignItems: "center", justifyContent: "center",
+        }}
+        title="Quit"
+      >⏻</button>
+
       <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 14 }}>
         <MetricTabs value={metric} onChange={setMetric} theme={theme} />
         <TimeRangeTabs value={timeRange} onChange={setTimeRange} theme={theme} />

@@ -58,3 +58,9 @@ pub fn set_config(app: AppHandle, state: State<AppState>, config: Config) -> Res
 pub fn hide_window(window: tauri::WebviewWindow) -> Result<(), String> {
     window.hide().map_err(|e| e.to_string())
 }
+
+#[tauri::command]
+pub fn quit_app(app: AppHandle) -> Result<(), String> {
+    app.exit(0);
+    Ok(())
+}
