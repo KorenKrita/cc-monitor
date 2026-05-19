@@ -25,9 +25,9 @@ pub fn format_tray_text(request: &ParsedRequest, config: &TrayConfig) -> String 
             }
             "ttft" => {
                 if let Some(ms) = request.duration_ms.filter(|&ms| ms > 0) {
-                    parts.push(format!("🕐{}", format_duration(ms)));
+                    parts.push(format!("⏱{}", format_duration(ms)));
                 } else {
-                    parts.push("🕐—".to_string());
+                    parts.push("⏱—".to_string());
                 }
             }
             _ => {}
@@ -47,7 +47,7 @@ pub fn format_idle_tray_text(config: &TrayConfig) -> String {
         match item.as_str() {
             "out_rate" => parts.push("↓—".to_string()),
             "in_rate" => parts.push("↑—".to_string()),
-            "ttft" => parts.push("🕐—".to_string()),
+            "ttft" => parts.push("⏱—".to_string()),
             _ => {}
         }
     }

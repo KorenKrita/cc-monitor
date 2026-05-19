@@ -37,6 +37,14 @@ export function Settings({ config, onSave, onClose, theme }: Props) {
     updateTrayItems(items);
   };
 
+  const moveItem = (idx: number, dir: -1 | 1) => {
+    const items = [...draft.tray.items];
+    const target = idx + dir;
+    if (target < 0 || target >= items.length) return;
+    [items[idx], items[target]] = [items[target], items[idx]];
+    updateTrayItems(items);
+  };
+
   const updateAlias = (key: string, newKey: string, value: string) => {
     const aliases = { ...draft.model_aliases };
     if (newKey !== key) delete aliases[key];
@@ -126,20 +134,46 @@ export function Settings({ config, onSave, onClose, theme }: Props) {
           )}
         </div>
 
-        {/* Tray Items */}
+        {/* Tray Items (checkboxes + reorder) */}
         <div>
-          <div style={labelStyle}>Status Bar Items</div>
-          <div style={{ display: "flex", gap: 8 }}>
-            {(["out_rate", "in_rate", "ttft"] as Metric[]).map((item) => (
-              <label key={item} style={{ display: "flex", alignItems: "center", gap: 4, cursor: "pointer", fontSize: 11 }}>
+          <div style={labelStyle}>Status Bar Items (drag to reorder)</div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+            {draft.tray.items.map((item, idx) => (
+              <div key={item} style={{ display: "flex", alignItems: "center", gap: 6 }}>
                 <input
                   type="checkbox"
-                  checked={draft.tray.items.includes(item)}
+                  checked={true}
                   onChange={() => toggleTrayItem(item)}
                   style={{ accentColor: theme.accentGreen }}
                 />
-                {item === "out_rate" ? "Out" : item === "in_rate" ? "In" : "TTFT"}
-              </label>
+                <span style={{ fontSize: 11, flex: 1 }}>
+                  {item === "out_rate" ? "↓ Out Rate" : item === "in_rate" ? "↑ In Rate" : "⏱ TTFT"}
+                </span>
+                <button
+                  onClick={() => moveItem(idx, -1)}
+                  disabled={idx === 0}
+                  style={{ background: "transparent", border: "none", color: idx === 0 ? theme.border : theme.muted, fontSize: 12, cursor: idx === 0 ? "default" : "pointer", padding: "0 2px" }}
+                >▲</button>
+                <button
+                  onClick={() => moveItem(idx, 1)}
+                  disabled={idx === draft.tray.items.length - 1}
+                  style={{ background: "transparent", border: "none", color: idx === draft.tray.items.length - 1 ? theme.border : theme.muted, fontSize: 12, cursor: idx === draft.tray.items.length - 1 ? "default" : "pointer", padding: "0 2px" }}
+                >▼</button>
+              </div>
+            ))}
+            {/* Show unchecked items */}
+            {(["out_rate", "in_rate", "ttft"] as Metric[]).filter((m) => !draft.tray.items.includes(m)).map((item) => (
+              <div key={item} style={{ display: "flex", alignItems: "center", gap: 6, opacity: 0.5 }}>
+                <input
+                  type="checkbox"
+                  checked={false}
+                  onChange={() => toggleTrayItem(item)}
+                  style={{ accentColor: theme.accentGreen }}
+                />
+                <span style={{ fontSize: 11 }}>
+                  {item === "out_rate" ? "↓ Out Rate" : item === "in_rate" ? "↑ In Rate" : "⏱ TTFT"}
+                </span>
+              </div>
             ))}
           </div>
         </div>

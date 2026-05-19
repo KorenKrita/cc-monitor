@@ -56,7 +56,7 @@ export default function App() {
       <button
         onClick={() => invoke("hide_window")}
         style={{
-          position: "absolute", top: 10, left: 10,
+          position: "absolute", top: 6, left: 6,
           width: 12, height: 12, borderRadius: "50%",
           background: "#EF4444", border: "none",
           cursor: "pointer", padding: 0,
