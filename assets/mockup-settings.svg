@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="520" viewBox="0 0 960 520">
+  <defs>
+    <filter id="shadow3">
+      <feDropShadow dx="0" dy="4" stdDeviation="8" flood-opacity="0.2"/>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="960" height="520" fill="#1a1a2e"/>
+
+  <!-- Settings Panel -->
+  <rect x="240" y="40" width="480" height="440" rx="12" fill="#0E1223" filter="url(#shadow3)" stroke="#272F42" stroke-width="1"/>
+
+  <!-- Title -->
+  <text x="270" y="75" font-family="SF Pro Display, system-ui" font-size="13" fill="#F8FAFC" font-weight="500">Settings</text>
+
+  <!-- Theme Section -->
+  <text x="270" y="110" font-family="SF Mono, Fira Code, monospace" font-size="8" fill="#64748B" letter-spacing="0.5">THEME</text>
+  <rect x="270" y="118" width="420" height="30" rx="6" fill="#1A1E2F" stroke="#272F42" stroke-width="1"/>
+  <text x="284" y="137" font-family="SF Pro Display, system-ui" font-size="11" fill="#F8FAFC">System</text>
+  <text x="670" y="137" font-family="system-ui" font-size="10" fill="#64748B">▾</text>
+
+  <!-- Status Bar Model Filter -->
+  <text x="270" y="175" font-family="SF Mono, Fira Code, monospace" font-size="8" fill="#64748B" letter-spacing="0.5">STATUS BAR MODEL FILTER</text>
+  <rect x="270" y="183" width="420" height="30" rx="6" fill="#1A1E2F" stroke="#272F42" stroke-width="1"/>
+  <text x="284" y="202" font-family="SF Pro Display, system-ui" font-size="11" fill="#F8FAFC">Whitelist</text>
+  <text x="670" y="202" font-family="system-ui" font-size="10" fill="#64748B">▾</text>
+
+  <!-- Whitelist textarea -->
+  <rect x="270" y="220" width="420" height="36" rx="6" fill="#1A1E2F" stroke="#272F42" stroke-width="1"/>
+  <text x="284" y="242" font-family="SF Mono, Fira Code, monospace" font-size="10" fill="#F8FAFC">claude-opus-4-7, claude-sonnet-4-6</text>
+  <text x="270" y="270" font-family="SF Pro Display, system-ui" font-size="9" fill="#64748B">Comma-separated model names</text>
+
+  <!-- Display Mode -->
+  <text x="270" y="300" font-family="SF Mono, Fira Code, monospace" font-size="8" fill="#64748B" letter-spacing="0.5">DISPLAY MODE</text>
+  <rect x="270" y="308" width="420" height="30" rx="6" fill="#1A1E2F" stroke="#272F42" stroke-width="1"/>
+  <text x="284" y="327" font-family="SF Pro Display, system-ui" font-size="11" fill="#F8FAFC">Average</text>
+  <text x="670" y="327" font-family="system-ui" font-size="10" fill="#64748B">▾</text>
+
+  <!-- Average minutes -->
+  <text x="284" y="360" font-family="SF Pro Display, system-ui" font-size="11" fill="#F8FAFC">Past</text>
+  <rect x="310" y="346" width="44" height="24" rx="4" fill="#1A1E2F" stroke="#272F42" stroke-width="1"/>
+  <text x="332" y="362" font-family="SF Mono, Fira Code, monospace" font-size="11" fill="#F8FAFC" text-anchor="middle">5</text>
+  <text x="362" y="360" font-family="SF Pro Display, system-ui" font-size="11" fill="#F8FAFC">minutes</text>
+
+  <!-- Model Aliases -->
+  <text x="270" y="400" font-family="SF Mono, Fira Code, monospace" font-size="8" fill="#64748B" letter-spacing="0.5">MODEL ALIASES</text>
+  <rect x="270" y="408" width="200" height="26" rx="4" fill="#1A1E2F" stroke="#272F42" stroke-width="1"/>
+  <text x="284" y="425" font-family="SF Mono, Fira Code, monospace" font-size="9" fill="#94A3B8">claude-opus-4-7</text>
+  <text x="480" y="425" font-family="SF Pro Display, system-ui" font-size="11" fill="#64748B">→</text>
+  <rect x="500" y="408" width="120" height="26" rx="4" fill="#1A1E2F" stroke="#272F42" stroke-width="1"/>
+  <text x="514" y="425" font-family="SF Mono, Fira Code, monospace" font-size="9" fill="#F8FAFC">opus</text>
+  <rect x="630" y="408" width="24" height="26" rx="4" fill="#EF4444" opacity="0.2"/>
+  <text x="642" y="425" font-family="system-ui" font-size="11" fill="#EF4444" text-anchor="middle">×</text>
+
+  <!-- Footer buttons -->
+  <line x1="270" y1="450" x2="690" y2="450" stroke="#272F42" stroke-width="1"/>
+  <rect x="590" y="458" width="60" height="26" rx="6" fill="transparent" stroke="#272F42" stroke-width="1"/>
+  <text x="620" y="475" font-family="SF Pro Display, system-ui" font-size="10" fill="#94A3B8" text-anchor="middle">Cancel</text>
+  <rect x="658" y="458" width="50" height="26" rx="6" fill="#22C55E"/>
+  <text x="683" y="475" font-family="SF Pro Display, system-ui" font-size="10" fill="#fff" text-anchor="middle">Save</text>
+</svg>

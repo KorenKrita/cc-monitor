@@ -23,4 +23,8 @@ dist-ssr
 *.sln
 *.sw?
 .superpowers/
+docs/superpowers/
 .DS_Store
+
+# Build artifacts
+src-tauri/target/
