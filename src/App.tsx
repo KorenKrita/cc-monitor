@@ -8,13 +8,15 @@ import { Chart } from "./components/Chart";
 import { ModelFilter } from "./components/ModelFilter";
 import { MetricTabs } from "./components/MetricTabs";
 import { TimeRangeTabs } from "./components/TimeRangeTabs";
+import { Settings } from "./components/Settings";
 
 export default function App() {
-  const { config, resolvedTheme } = useSettings();
+  const { config, setConfig, resolvedTheme } = useSettings();
   const { requests, models, latest, fetchData } = useMonitorData();
   const [metric, setMetric] = useState<Metric>("out_rate");
   const [timeRange, setTimeRange] = useState<TimeRange>("1h");
   const [selectedModels, setSelectedModels] = useState<string[]>([]);
+  const [showSettings, setShowSettings] = useState(false);
 
   const theme: ThemeTokens = resolvedTheme() === "dark" ? darkTheme : lightTheme;
   const isDark = resolvedTheme() === "dark";
@@ -35,6 +37,19 @@ export default function App() {
 
   const metricUnit = metric === "ttft" ? "sec" : "tok/s";
 
+  if (showSettings) {
+    return (
+      <div style={{ background: theme.bg, color: theme.foreground, fontFamily: "'Fira Sans', system-ui, sans-serif", height: "100vh", overflow: "hidden", position: "relative" }}>
+        <Settings
+          config={config}
+          onSave={(c) => { setConfig(c); setShowSettings(false); }}
+          onClose={() => setShowSettings(false)}
+          theme={theme}
+        />
+      </div>
+    );
+  }
+
   return (
     <div style={{ background: theme.bg, color: theme.foreground, fontFamily: "'Fira Sans', system-ui, sans-serif", padding: 20, height: "100vh", overflow: "hidden", position: "relative" }}>
       {/* Close button - top left red dot */}
@@ -52,6 +67,19 @@ export default function App() {
         onMouseLeave={(e) => { e.currentTarget.style.color = "transparent"; }}
         title="Close"
       >×</button>
+
+      {/* Settings gear - bottom right */}
+      <button
+        onClick={() => setShowSettings(true)}
+        style={{
+          position: "absolute", bottom: 12, right: 12,
+          width: 20, height: 20, borderRadius: 4,
+          background: "transparent", border: "none",
+          color: theme.muted, fontSize: 14, cursor: "pointer",
+          display: "flex", alignItems: "center", justifyContent: "center",
+        }}
+        title="Settings"
+      >⚙</button>
 
       <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 14 }}>
         <MetricTabs value={metric} onChange={setMetric} theme={theme} />
