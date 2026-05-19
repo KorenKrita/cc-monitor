@@ -28,13 +28,17 @@ impl FileWatcher {
         let tracker = Arc::new(SessionTracker::new());
         let file_positions: Arc<Mutex<HashMap<PathBuf, u64>>> = Arc::new(Mutex::new(HashMap::new()));
 
-        // Record current end-of-file for all existing .jsonl files
+        // Record current end-of-file and pre-seed tracker with last user timestamps
         if let Ok(entries) = glob_jsonl_files(&claude_dir) {
             let mut positions = file_positions.lock().unwrap();
-            for path in entries {
-                if let Ok(metadata) = std::fs::metadata(&path) {
-                    positions.insert(path, metadata.len());
+            for path in &entries {
+                if let Ok(metadata) = std::fs::metadata(path) {
+                    positions.insert(path.clone(), metadata.len());
                 }
+            }
+            // Seed session tracker with recent user timestamps from each file
+            for path in &entries {
+                seed_last_user_timestamp(path, &tracker);
             }
         }
 
@@ -137,4 +141,21 @@ fn glob_jsonl_files(dir: &Path) -> Result<Vec<PathBuf>, std::io::Error> {
         }
     }
     Ok(results)
+}
+
+fn seed_last_user_timestamp(path: &Path, tracker: &Arc<SessionTracker>) {
+    let content = match std::fs::read_to_string(path) {
+        Ok(c) => c,
+        Err(_) => return,
+    };
+    // Scan from the end to find the last "user" type entry
+    for line in content.lines().rev() {
+        let trimmed = line.trim();
+        if trimmed.is_empty() { continue; }
+        if trimmed.contains("\"type\":\"user\"") || trimmed.contains("\"type\": \"user\"") {
+            // Feed it to the tracker to record the timestamp
+            tracker.parse_line(trimmed);
+            return;
+        }
+    }
 }

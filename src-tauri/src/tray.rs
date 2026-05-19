@@ -11,16 +11,12 @@ pub fn format_tray_text(request: &ParsedRequest, config: &TrayConfig) -> String 
                 if let Some(ds) = duration_s {
                     let rate = (request.output_tokens as f64 / ds).round() as i64;
                     parts.push(format!("↓{}", format_rate(rate)));
-                } else {
-                    parts.push(format!("↓{}", format_rate(request.output_tokens)));
                 }
             }
             "in_rate" => {
                 if let Some(ds) = duration_s {
                     let rate = (request.input_tokens as f64 / ds).round() as i64;
                     parts.push(format!("↑{}", format_rate(rate)));
-                } else {
-                    parts.push(format!("↑{}", format_rate(request.input_tokens)));
                 }
             }
             "ttft" => {

@@ -106,7 +106,7 @@ fn main() {
                         _ => true,
                     };
 
-                    if should_display {
+                    if should_display && request.duration_ms.filter(|&ms| ms > 0).is_some() {
                         let tray_text = tray::format_tray_text(&request, &current_config.tray);
                         if let Some(tray) = handle_clone.tray_by_id("main") {
                             let _ = tray.set_title(Some(&tray_text));
