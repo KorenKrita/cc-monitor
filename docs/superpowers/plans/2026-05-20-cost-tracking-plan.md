@@ -446,10 +446,11 @@ git commit -m "feat: add Codex CLI JSONL parser"
 
 - [ ] **Step 1: Add Codex directory scanning to the polling loop**
 
-Refactor `start_polling` to watch both directories:
+Refactor `start_polling` to watch both directories, respecting `watch_sources` config:
 
 ```rust
 use crate::codex_parser::CodexSessionTracker;
+use crate::config::load_config;
 
 pub fn start_polling(tx: mpsc::UnboundedSender<ParsedRequest>) {
     std::thread::spawn(move || {
@@ -460,34 +461,41 @@ pub fn start_polling(tx: mpsc::UnboundedSender<ParsedRequest>) {
         let codex_tracker = Arc::new(CodexSessionTracker::new());
         let mut file_positions: HashMap<PathBuf, u64> = HashMap::new();
 
+        let config = load_config();
+        let watch_sources = &config.cost.watch_sources;
+
         // Seed Claude sessions (existing logic)
-        if let Some(ref dir) = claude_dir {
-            if dir.exists() {
-                if let Ok(files) = glob_jsonl_files(dir) {
-                    for path in &files {
-                        if let Ok(meta) = std::fs::metadata(path) {
-                            file_positions.insert(path.clone(), meta.len());
+        if watch_sources.is_empty() || watch_sources.contains(&"claude".to_string()) {
+            if let Some(ref dir) = claude_dir {
+                if dir.exists() {
+                    if let Ok(files) = glob_jsonl_files(dir) {
+                        for path in &files {
+                            if let Ok(meta) = std::fs::metadata(path) {
+                                file_positions.insert(path.clone(), meta.len());
+                            }
                         }
-                    }
-                    let mut recent: Vec<_> = files.iter()
-                        .filter_map(|p| std::fs::metadata(p).ok().map(|m| (p, m.modified().ok())))
-                        .filter_map(|(p, t)| t.map(|t| (p, t)))
-                        .collect();
-                    recent.sort_by(|a, b| b.1.cmp(&a.1));
-                    for (path, _) in recent.iter().take(5) {
-                        seed_last_user_timestamp(path, &tracker);
+                        let mut recent: Vec<_> = files.iter()
+                            .filter_map(|p| std::fs::metadata(p).ok().map(|m| (p, m.modified().ok())))
+                            .filter_map(|(p, t)| t.map(|t| (p, t)))
+                            .collect();
+                        recent.sort_by(|a, b| b.1.cmp(&a.1));
+                        for (path, _) in recent.iter().take(5) {
+                            seed_last_user_timestamp(path, &tracker);
+                        }
                     }
                 }
             }
         }
 
         // Seed Codex positions
-        if let Some(ref dir) = codex_dir {
-            if dir.exists() {
-                if let Ok(files) = glob_jsonl_files(dir) {
-                    for path in &files {
-                        if let Ok(meta) = std::fs::metadata(path) {
-                            file_positions.insert(path.clone(), meta.len());
+        if watch_sources.is_empty() || watch_sources.contains(&"codex".to_string()) {
+            if let Some(ref dir) = codex_dir {
+                if dir.exists() {
+                    if let Ok(files) = glob_jsonl_files(dir) {
+                        for path in &files {
+                            if let Ok(meta) = std::fs::metadata(path) {
+                                file_positions.insert(path.clone(), meta.len());
+                            }
                         }
                     }
                 }
@@ -497,34 +505,42 @@ pub fn start_polling(tx: mpsc::UnboundedSender<ParsedRequest>) {
         loop {
             std::thread::sleep(Duration::from_millis(500));
 
+            // Reload config to pick up watch_sources changes
+            let config = load_config();
+            let watch_sources = &config.cost.watch_sources;
+
             // Scan Claude files
-            if let Some(ref dir) = claude_dir {
-                if dir.exists() {
-                    if let Ok(files) = glob_jsonl_files(dir) {
-                        for path in &files {
-                            process_file(path, &mut file_positions, |line| {
-                                if let Some(mut req) = tracker.parse_line(line) {
-                                    req.project = crate::parser::extract_project_from_claude_path(path);
-                                    req.source = "claude".to_string();
-                                    let _ = tx.send(req);
-                                }
-                            });
+            if watch_sources.is_empty() || watch_sources.contains(&"claude".to_string()) {
+                if let Some(ref dir) = claude_dir {
+                    if dir.exists() {
+                        if let Ok(files) = glob_jsonl_files(dir) {
+                            for path in &files {
+                                process_file(path, &mut file_positions, |line| {
+                                    if let Some(mut req) = tracker.parse_line(line) {
+                                        req.project = crate::parser::extract_project_from_claude_path(path);
+                                        req.source = "claude".to_string();
+                                        let _ = tx.send(req);
+                                    }
+                                });
+                            }
                         }
                     }
                 }
             }
 
             // Scan Codex files
-            if let Some(ref dir) = codex_dir {
-                if dir.exists() {
-                    if let Ok(files) = glob_jsonl_files(dir) {
-                        for path in &files {
-                            let file_id = path.to_string_lossy().to_string();
-                            process_file(path, &mut file_positions, |line| {
-                                if let Some(req) = codex_tracker.parse_line(line, &file_id) {
-                                    let _ = tx.send(req);
-                                }
-                            });
+            if watch_sources.is_empty() || watch_sources.contains(&"codex".to_string()) {
+                if let Some(ref dir) = codex_dir {
+                    if dir.exists() {
+                        if let Ok(files) = glob_jsonl_files(dir) {
+                            for path in &files {
+                                let file_id = path.to_string_lossy().to_string();
+                                process_file(path, &mut file_positions, |line| {
+                                    if let Some(req) = codex_tracker.parse_line(line, &file_id) {
+                                        let _ = tx.send(req);
+                                    }
+                                });
+                            }
                         }
                     }
                 }
@@ -628,9 +644,12 @@ pub struct CostConfig {
     pub model_prices: HashMap<String, ModelPrice>,
     #[serde(default)]
     pub last_sync_time: Option<String>,
+    #[serde(default = "default_watch_sources")]
+    pub watch_sources: Vec<String>,
 }
 
 fn default_time_window() -> String { "day".into() }
+fn default_watch_sources() -> Vec<String> { vec!["claude".into(), "codex".into()] }
 
 impl Default for CostConfig {
     fn default() -> Self {
@@ -640,6 +659,7 @@ impl Default for CostConfig {
             model_whitelist: vec![],
             model_prices: HashMap::new(),
             last_sync_time: None,
+            watch_sources: default_watch_sources(),
         }
     }
 }
@@ -690,12 +710,15 @@ export interface ModelPrice {
   source: string;
 }
 
+export type WatchSource = "claude" | "codex";
+
 export interface CostConfig {
   time_window: CostTimeWindow;
   project_whitelist: string[];
   model_whitelist: string[];
   model_prices: Record<string, ModelPrice>;
   last_sync_time: string | null;
+  watch_sources: WatchSource[];
 }
 
 export interface Config {
@@ -1204,6 +1227,32 @@ After the "Model Aliases" section, add a new "Cost" section. Insert before the f
   </select>
 </div>
 
+{/* Watch Sources */}
+<div>
+  <div style={labelStyle}>Watch Sources</div>
+  <div style={{ display: "flex", gap: 12 }}>
+    {(["claude", "codex"] as const).map((src) => (
+      <label key={src} style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 11 }}>
+        <input
+          type="checkbox"
+          checked={draft.cost.watch_sources.includes(src)}
+          onChange={(e) => {
+            const sources = e.target.checked
+              ? [...draft.cost.watch_sources, src]
+              : draft.cost.watch_sources.filter((s) => s !== src);
+            setDraft({ ...draft, cost: { ...draft.cost, watch_sources: sources } });
+          }}
+          style={{ accentColor: theme.accentGreen }}
+        />
+        {src === "claude" ? "Claude Code" : "Codex CLI"}
+      </label>
+    ))}
+  </div>
+  <div style={{ fontSize: 9, color: theme.muted, marginTop: 3 }}>
+    Which session logs to monitor. Both enabled by default.
+  </div>
+</div>
+
 {/* Cost Project Whitelist */}
 <div>
   <div style={labelStyle}>Cost — Project Whitelist</div>
@@ -1270,7 +1319,7 @@ Also update the checked items label rendering:
 
 At the top of Settings.tsx:
 ```tsx
-import { Config, Theme, Metric, CostTimeWindow } from "../types";
+import { Config, Theme, Metric, CostTimeWindow, WatchSource } from "../types";
 ```
 
 - [ ] **Step 4: Verify dev server renders correctly**
