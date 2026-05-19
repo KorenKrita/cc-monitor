@@ -80,12 +80,20 @@ fn main() {
 
             // Process incoming requests
             let handle_clone = handle.clone();
+            let app_start = chrono::Utc::now();
             tauri::async_runtime::spawn(async move {
                 let mut current_config = config::load_config();
                 let mut config_mtime = std::fs::metadata(config::config_dir().join("settings.json"))
                     .and_then(|m| m.modified()).ok();
 
                 while let Some(request) = rx.recv().await {
+                    // Skip old messages (from files modified but containing historical data)
+                    if let Ok(ts) = chrono::DateTime::parse_from_rfc3339(&request.timestamp) {
+                        if ts < app_start - chrono::Duration::minutes(5) {
+                            continue;
+                        }
+                    }
+
                     let _ = db_clone.insert_request(
                         &request.timestamp,
                         &request.model,
