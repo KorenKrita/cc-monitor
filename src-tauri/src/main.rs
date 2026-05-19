@@ -25,7 +25,6 @@ fn main() {
         .setup(move |app| {
             let handle = app.handle().clone();
             let db_clone = db.clone();
-            let config_clone = config.clone();
 
             // Create tray with hexagon icon + text
             let initial_text = match db.get_latest() {
@@ -98,9 +97,17 @@ fn main() {
                         request.duration_ms,
                     );
 
-                    // Only update tray if we have valid rate data (duration > 0)
-                    if request.duration_ms.filter(|&ms| ms > 0).is_some() {
-                        let tray_text = tray::format_tray_text(&request, &config_clone.tray);
+                    // Reload config each time to pick up settings changes
+                    let current_config = config::load_config();
+
+                    // Check model filter
+                    let should_display = match current_config.tray.model_filter.as_str() {
+                        "whitelist" => current_config.tray.model_whitelist.contains(&request.model),
+                        _ => true,
+                    };
+
+                    if should_display && request.duration_ms.filter(|&ms| ms > 0).is_some() {
+                        let tray_text = tray::format_tray_text(&request, &current_config.tray);
                         if let Some(tray) = handle_clone.tray_by_id("main") {
                             let _ = tray.set_title(Some(&tray_text));
                         }
