@@ -43,7 +43,7 @@ fn main() {
                 _ => tray::format_idle_tray_text(&config.tray),
             };
             let icon = tauri::image::Image::from_bytes(include_bytes!("../icons/tray-icon.png")).expect("bad icon");
-            let _tray = TrayIconBuilder::new()
+            let _tray = TrayIconBuilder::with_id("main")
                 .icon(icon)
                 .icon_as_template(true)
                 .show_menu_on_left_click(false)

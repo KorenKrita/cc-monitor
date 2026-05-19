@@ -19,14 +19,12 @@ pub fn start_polling(tx: mpsc::UnboundedSender<ParsedRequest>) {
         let tracker = Arc::new(SessionTracker::new());
         let mut file_positions: HashMap<PathBuf, u64> = HashMap::new();
 
-        // Initialize: record current EOF for all files, seed tracker
         if let Ok(files) = glob_jsonl_files(&claude_dir) {
             for path in &files {
                 if let Ok(meta) = std::fs::metadata(path) {
                     file_positions.insert(path.clone(), meta.len());
                 }
             }
-            // Seed with last user timestamp from recently modified files only
             let mut recent: Vec<_> = files.iter()
                 .filter_map(|p| std::fs::metadata(p).ok().map(|m| (p, m.modified().ok())))
                 .filter_map(|(p, t)| t.map(|t| (p, t)))
@@ -37,7 +35,6 @@ pub fn start_polling(tx: mpsc::UnboundedSender<ParsedRequest>) {
             }
         }
 
-        // Poll loop: check for file changes every 1 second
         loop {
             std::thread::sleep(Duration::from_secs(1));
 
@@ -59,7 +56,6 @@ pub fn start_polling(tx: mpsc::UnboundedSender<ParsedRequest>) {
                     continue;
                 }
 
-                // File grew — read new lines
                 if let Ok(file) = File::open(path) {
                     let mut reader = BufReader::new(file);
                     if reader.seek(SeekFrom::Start(last_pos)).is_ok() {
