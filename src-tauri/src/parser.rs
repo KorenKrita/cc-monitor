@@ -67,6 +67,9 @@ impl SessionTracker {
 
         let message = entry.message?;
         let model = message.model?;
+        if model.starts_with('<') || model.is_empty() {
+            return None;
+        }
         let usage = message.usage?;
         let timestamp = entry.timestamp?;
 
