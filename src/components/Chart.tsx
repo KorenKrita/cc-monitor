@@ -57,17 +57,24 @@ export function Chart({ requests, metric, timeRange, selectedModels, models, the
         type: "time",
         min: xAxisMin,
         max: xAxisMax,
+        boundaryGap: false,
         axisLine: { show: false },
         axisTick: { show: false },
-        splitNumber: timeRange === "1h" ? 4 : 4,
+        splitNumber: timeRange === "1h" ? 4 : 5,
         axisLabel: {
           fontSize: 9,
           color: theme.tabInactiveText,
           fontFamily: "'Fira Code', monospace",
+          showMinLabel: true,
+          showMaxLabel: true,
           formatter: (value: number) => {
             const d = new Date(value);
             if (timeRange === "1h") {
               return `${d.getHours().toString().padStart(2, "0")}:${d.getMinutes().toString().padStart(2, "0")}`;
+            }
+            if (d.getHours() === 0 && d.getMinutes() === 0) {
+              const prev = new Date(value - 1);
+              if (prev.getDate() !== d.getDate()) return "24:00";
             }
             return `${d.getHours()}:00`;
           },
