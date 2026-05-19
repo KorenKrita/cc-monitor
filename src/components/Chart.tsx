@@ -100,9 +100,7 @@ export function Chart({ requests, metric, timeRange, selectedModels, models, the
         formatter: (params: any[]) => {
           if (!params.length) return "";
           const time = new Date(params[0].value[0]);
-          const timeStr = timeRange === "1h"
-            ? `${time.getHours().toString().padStart(2, "0")}:${time.getMinutes().toString().padStart(2, "0")}:${time.getSeconds().toString().padStart(2, "0")}`
-            : `${time.getHours().toString().padStart(2, "0")}:${time.getMinutes().toString().padStart(2, "0")}`;
+          const timeStr = `${time.getHours().toString().padStart(2, "0")}:${time.getMinutes().toString().padStart(2, "0")}`;
           let html = `<div style="margin-bottom:4px;color:${theme.muted}">${timeStr}</div>`;
           for (const p of params) {
             const val = metric === "ttft"
@@ -169,7 +167,7 @@ function getXAxisMin(timeRange: TimeRange): string {
 
 function getBucketSize(timeRange: TimeRange): number | null {
   switch (timeRange) {
-    case "1h": return null;
+    case "1h": return 5 * 60 * 1000;
     case "today": return 30 * 60 * 1000;
     case "yesterday": return 60 * 60 * 1000;
   }

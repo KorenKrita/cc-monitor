@@ -27,11 +27,13 @@ fn main() {
             let db_clone = db.clone();
             let config_clone = config.clone();
 
-            // Create tray with idle text (transparent icon, text-only appearance)
+            // Create tray - text only (1x1 transparent icon minimizes blank space)
             let idle_text = tray::format_idle_tray_text(&config.tray);
+            let icon = tauri::image::Image::new_owned(vec![0, 0, 0, 0], 1, 1);
             let _tray = TrayIconBuilder::new()
-                .icon(tauri::image::Image::from_bytes(include_bytes!("../icons/tray-icon.png")).expect("bad icon"))
+                .icon(icon)
                 .icon_as_template(true)
+                .show_menu_on_left_click(false)
                 .title(&idle_text)
                 .tooltip("CC Monitor")
                 .on_tray_icon_event(move |tray_icon, event| {
