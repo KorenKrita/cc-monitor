@@ -25,14 +25,15 @@ export default function App() {
 
   const latestValue = (): string => {
     if (!latest) return "—";
+    const durationS = (latest.duration_ms && latest.duration_ms > 0) ? latest.duration_ms / 1000 : null;
     switch (metric) {
-      case "out_rate": return latest.output_tokens.toLocaleString();
-      case "in_rate": return latest.input_tokens.toLocaleString();
-      case "ttft": return latest.duration_ms ? `${(latest.duration_ms / 1000).toFixed(1)}s` : "—";
+      case "out_rate": return durationS ? `${Math.round(latest.output_tokens / durationS)}` : "—";
+      case "in_rate": return durationS ? `${Math.round(latest.input_tokens / durationS)}` : "—";
+      case "ttft": return durationS ? `${durationS.toFixed(1)}s` : "—";
     }
   };
 
-  const metricUnit = metric === "ttft" ? "sec" : "tok/req";
+  const metricUnit = metric === "ttft" ? "sec" : "tok/s";
 
   return (
     <div style={{ background: theme.bg, color: theme.foreground, fontFamily: "'Fira Sans', system-ui, sans-serif", padding: 20, height: "100vh", overflow: "hidden", position: "relative" }}>

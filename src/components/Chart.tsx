@@ -98,7 +98,7 @@ export function Chart({ requests, metric, timeRange, selectedModels, models, the
           for (const p of params) {
             const val = metric === "ttft"
               ? `${(p.value[1] / 1000).toFixed(1)}s`
-              : p.value[1].toLocaleString();
+              : `${p.value[1].toLocaleString()} tok/s`;
             html += `<div style="display:flex;align-items:center;gap:4px;margin-bottom:2px">`;
             html += `<span style="width:6px;height:6px;border-radius:50%;background:${p.color};display:inline-block"></span>`;
             html += `<span>${p.seriesName}: ${val}</span></div>`;
@@ -133,10 +133,16 @@ function groupByModel(requests: RequestRecord[], selectedModels: string[]): Reco
 }
 
 function getValue(record: RequestRecord, metric: Metric): number | null {
+  const durationS = (record.duration_ms && record.duration_ms > 0) ? record.duration_ms / 1000 : null;
   switch (metric) {
-    case "out_rate": return record.output_tokens;
-    case "in_rate": return record.input_tokens;
-    case "ttft": return (record.duration_ms && record.duration_ms > 0) ? record.duration_ms : null;
+    case "out_rate":
+      if (!durationS) return null;
+      return Math.round(record.output_tokens / durationS);
+    case "in_rate":
+      if (!durationS) return null;
+      return Math.round(record.input_tokens / durationS);
+    case "ttft":
+      return durationS ? record.duration_ms : null;
   }
 }
 

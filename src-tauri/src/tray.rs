@@ -3,14 +3,26 @@ use crate::parser::ParsedRequest;
 
 pub fn format_tray_text(request: &ParsedRequest, config: &TrayConfig) -> String {
     let mut parts: Vec<String> = Vec::new();
+    let duration_s = request.duration_ms.filter(|&ms| ms > 0).map(|ms| ms as f64 / 1000.0);
 
     for item in &config.items {
         match item.as_str() {
-            "out_rate" => parts.push(format!("↓{}", format_tokens(request.output_tokens))),
-            "in_rate" => parts.push(format!("↑{}", format_tokens(request.input_tokens))),
+            "out_rate" => {
+                if let Some(ds) = duration_s {
+                    let rate = (request.output_tokens as f64 / ds).round() as i64;
+                    parts.push(format!("↓{}", format_rate(rate)));
+                }
+            }
+            "in_rate" => {
+                if let Some(ds) = duration_s {
+                    let rate = (request.input_tokens as f64 / ds).round() as i64;
+                    parts.push(format!("↑{}", format_rate(rate)));
+                }
+            }
             "ttft" => {
-                let ms = request.duration_ms.unwrap_or(0);
-                parts.push(format_duration(ms));
+                if let Some(ms) = request.duration_ms.filter(|&ms| ms > 0) {
+                    parts.push(format_duration(ms));
+                }
             }
             _ => {}
         }
@@ -27,9 +39,9 @@ pub fn format_idle_tray_text(config: &TrayConfig) -> String {
     let mut parts: Vec<String> = Vec::new();
     for item in &config.items {
         match item.as_str() {
-            "out_rate" => parts.push("↓0".to_string()),
-            "in_rate" => parts.push("↑0".to_string()),
-            "ttft" => parts.push("0s".to_string()),
+            "out_rate" => parts.push("↓—".to_string()),
+            "in_rate" => parts.push("↑—".to_string()),
+            "ttft" => parts.push("—".to_string()),
             _ => {}
         }
     }
@@ -40,13 +52,11 @@ pub fn format_idle_tray_text(config: &TrayConfig) -> String {
     }
 }
 
-fn format_tokens(tokens: i64) -> String {
-    if tokens >= 1_000_000 {
-        format!("{:.1}M", tokens as f64 / 1_000_000.0)
-    } else if tokens >= 1_000 {
-        format!("{:.1}k", tokens as f64 / 1_000.0)
+fn format_rate(tok_per_s: i64) -> String {
+    if tok_per_s >= 1_000 {
+        format!("{:.1}k", tok_per_s as f64 / 1_000.0)
     } else {
-        tokens.to_string()
+        tok_per_s.to_string()
     }
 }
 
