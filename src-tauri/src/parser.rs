@@ -1,4 +1,3 @@
-// src-tauri/src/parser.rs
 use serde::Deserialize;
 use std::collections::HashMap;
 use std::sync::Mutex;
@@ -92,5 +91,19 @@ impl SessionTracker {
             cache_read_tokens: usage.cache_read_input_tokens.unwrap_or(0),
             duration_ms,
         })
+    }
+}
+
+impl From<crate::db::RequestRecord> for ParsedRequest {
+    fn from(r: crate::db::RequestRecord) -> Self {
+        Self {
+            timestamp: r.timestamp,
+            model: r.model,
+            input_tokens: r.input_tokens,
+            output_tokens: r.output_tokens,
+            cache_creation_tokens: r.cache_creation_tokens,
+            cache_read_tokens: r.cache_read_tokens,
+            duration_ms: r.duration_ms,
+        }
     }
 }

@@ -18,8 +18,8 @@ export default function App() {
   const [selectedModels, setSelectedModels] = useState<string[]>([]);
   const [showSettings, setShowSettings] = useState(false);
 
-  const theme: ThemeTokens = resolvedTheme() === "dark" ? darkTheme : lightTheme;
   const isDark = resolvedTheme() === "dark";
+  const theme: ThemeTokens = isDark ? darkTheme : lightTheme;
 
   useEffect(() => {
     fetchData(timeRange, selectedModels.length > 0 ? selectedModels : undefined);

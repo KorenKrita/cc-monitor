@@ -11,7 +11,10 @@ export function useMonitorData() {
 
   useEffect(() => {
     const unlisten = listen<RequestRecord>("new-request", (event) => {
-      setRequests((prev) => [...prev, event.payload]);
+      setRequests((prev) => {
+        const next = [...prev, event.payload];
+        return next.length > 500 ? next.slice(-500) : next;
+      });
       setLatest(event.payload);
       setModels((prev) => {
         if (prev.includes(event.payload.model)) return prev;

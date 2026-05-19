@@ -36,15 +36,7 @@ fn main() {
             // Create tray with hexagon icon + text
             let initial_text = match db.get_latest() {
                 Ok(Some(record)) => {
-                    let req = parser::ParsedRequest {
-                        timestamp: record.timestamp,
-                        model: record.model,
-                        input_tokens: record.input_tokens,
-                        output_tokens: record.output_tokens,
-                        cache_creation_tokens: record.cache_creation_tokens,
-                        cache_read_tokens: record.cache_read_tokens,
-                        duration_ms: record.duration_ms,
-                    };
+                    let req: parser::ParsedRequest = record.into();
                     tray::format_tray_text(&req, &config.tray)
                 }
                 _ => tray::format_idle_tray_text(&config.tray),
@@ -100,35 +92,36 @@ fn main() {
                         request.duration_ms,
                     );
 
+                    let _ = handle_clone.emit("new-request", &request);
+
                     let current_config = config::load_config();
 
-                    // Check model filter
                     let should_display = match current_config.tray.model_filter.as_str() {
                         "whitelist" => current_config.tray.model_whitelist.contains(&request.model),
                         _ => true,
                     };
 
-                    if should_display {
-                        let tray_text = match current_config.tray.display_mode.as_str() {
-                            "average" => {
-                                let mins = current_config.tray.average_minutes.max(1);
-                                let since = chrono::Utc::now() - chrono::Duration::minutes(mins as i64);
-                                tray::format_average_tray_text(&db_clone, &since.to_rfc3339(), &current_config.tray)
-                            }
-                            _ => {
-                                if request.duration_ms.filter(|&ms| ms > 0).is_some() {
-                                    tray::format_tray_text(&request, &current_config.tray)
-                                } else {
-                                    continue;
-                                }
-                            }
-                        };
-                        if let Some(tray) = handle_clone.tray_by_id("main") {
-                            let _ = tray.set_title(Some(&tray_text));
-                        }
+                    if !should_display {
+                        continue;
                     }
 
-                    let _ = handle_clone.emit("new-request", &request);
+                    let tray_text = match current_config.tray.display_mode.as_str() {
+                        "average" => {
+                            let mins = current_config.tray.average_minutes.max(1);
+                            let since = chrono::Utc::now() - chrono::Duration::minutes(mins as i64);
+                            tray::format_average_tray_text(&db_clone, &since.to_rfc3339(), &current_config.tray)
+                        }
+                        _ => {
+                            if request.duration_ms.filter(|&ms| ms > 0).is_some() {
+                                tray::format_tray_text(&request, &current_config.tray)
+                            } else {
+                                continue;
+                            }
+                        }
+                    };
+                    if let Some(tray) = handle_clone.tray_by_id("main") {
+                        let _ = tray.set_title(Some(&tray_text));
+                    }
                 }
             });
 
