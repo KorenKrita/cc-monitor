@@ -19,10 +19,19 @@ export function Chart({ requests, metric, timeRange, selectedModels, models, the
 
   const option = useMemo(() => {
     const modelGroups = groupByModel(requests, selectedModels);
+    const bucketMs = getBucketSize(timeRange);
+
     const series = Object.entries(modelGroups).map(([model, records]) => {
       const colorIndex = models.indexOf(model);
       const color = colors[colorIndex % colors.length] || theme.muted;
       const lineType = getLineStyle(colorIndex >= 0 ? colorIndex : 0);
+
+      const rawData = records
+        .map((r) => [r.timestamp, getValue(r, metric)] as [string, number | null])
+        .filter((d): d is [string, number] => d[1] !== null);
+
+      const chartData = bucketMs ? aggregateIntoBuckets(rawData, bucketMs) : rawData;
+
       return {
         name: getModelDisplayName(model, aliases),
         type: "line" as const,
@@ -34,7 +43,7 @@ export function Chart({ requests, metric, timeRange, selectedModels, models, the
           color,
         },
         itemStyle: { color },
-        data: records.map((r) => [r.timestamp, getValue(r, metric)]).filter(([, v]) => v !== null),
+        data: chartData,
       };
     });
 
@@ -156,4 +165,34 @@ function getXAxisMin(timeRange: TimeRange): string {
     case "yesterday":
       return new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1).toISOString();
   }
+}
+
+function getBucketSize(timeRange: TimeRange): number | null {
+  switch (timeRange) {
+    case "1h": return null;
+    case "today": return 30 * 60 * 1000;
+    case "yesterday": return 60 * 60 * 1000;
+  }
+}
+
+function aggregateIntoBuckets(data: [string, number][], bucketMs: number): [string, number][] {
+  if (data.length === 0) return [];
+
+  const buckets = new Map<number, number[]>();
+
+  for (const [ts, val] of data) {
+    const time = new Date(ts).getTime();
+    const bucketKey = Math.floor(time / bucketMs) * bucketMs;
+    if (!buckets.has(bucketKey)) buckets.set(bucketKey, []);
+    buckets.get(bucketKey)!.push(val);
+  }
+
+  const result: [string, number][] = [];
+  const sortedKeys = [...buckets.keys()].sort((a, b) => a - b);
+  for (const key of sortedKeys) {
+    const values = buckets.get(key)!;
+    const avg = Math.round(values.reduce((a, b) => a + b, 0) / values.length);
+    result.push([new Date(key + bucketMs / 2).toISOString(), avg]);
+  }
+  return result;
 }
