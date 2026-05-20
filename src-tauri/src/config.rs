@@ -21,30 +21,75 @@ fn default_price_source() -> String { "manual".into() }
 pub struct CostConfig {
     #[serde(default = "default_time_window")]
     pub time_window: String,
+    #[serde(default = "default_time_window_value")]
+    pub time_window_value: u32,
     #[serde(default)]
     pub project_whitelist: Vec<String>,
     #[serde(default)]
     pub model_whitelist: Vec<String>,
-    #[serde(default)]
+    #[serde(default = "default_model_prices")]
     pub model_prices: HashMap<String, ModelPrice>,
     #[serde(default)]
     pub last_sync_time: Option<String>,
     #[serde(default = "default_watch_sources")]
     pub watch_sources: Vec<String>,
+    #[serde(default = "default_sync_source")]
+    pub sync_source: String,
 }
 
 fn default_time_window() -> String { "day".into() }
+fn default_time_window_value() -> u32 { 1 }
 fn default_watch_sources() -> Vec<String> { vec!["claude".into(), "codex".into()] }
+fn default_sync_source() -> String { "all".into() }
+
+fn default_model_prices() -> HashMap<String, ModelPrice> {
+    let mut prices = HashMap::new();
+    let models = [
+        ("claude-opus-4-7", 15.0, 75.0, 1.88),
+        ("claude-sonnet-4-6", 3.0, 15.0, 0.3),
+        ("claude-haiku-4-5-20251001", 0.8, 4.0, 0.08),
+        ("gpt-4o", 2.5, 10.0, 1.25),
+        ("gpt-4o-mini", 0.15, 0.6, 0.075),
+        ("o3", 10.0, 40.0, 2.5),
+        ("o4-mini", 1.1, 4.4, 0.275),
+        ("gemini-2.5-pro", 1.25, 10.0, 0.315),
+        ("gemini-2.5-flash", 0.15, 0.6, 0.0375),
+        ("deepseek-chat", 0.27, 1.1, 0.07),
+        ("deepseek-reasoner", 0.55, 2.19, 0.14),
+    ];
+    for (name, input, output, cache) in models {
+        prices.insert(name.to_string(), ModelPrice {
+            input, output, cache, source: "bundled".to_string(),
+        });
+    }
+    prices
+}
 
 impl Default for CostConfig {
     fn default() -> Self {
         Self {
             time_window: default_time_window(),
+            time_window_value: default_time_window_value(),
             project_whitelist: vec![],
             model_whitelist: vec![],
-            model_prices: HashMap::new(),
+            model_prices: default_model_prices(),
             last_sync_time: None,
             watch_sources: default_watch_sources(),
+            sync_source: default_sync_source(),
+        }
+    }
+}
+
+impl CostConfig {
+    pub fn cost_since(&self) -> String {
+        let v = self.time_window_value.max(1) as i64;
+        let now = chrono::Utc::now();
+        match self.time_window.as_str() {
+            "day" => (now - chrono::Duration::days(v)).to_rfc3339(),
+            "month" => (now - chrono::Duration::days(v * 30)).to_rfc3339(),
+            "year" => (now - chrono::Duration::days(v * 365)).to_rfc3339(),
+            "all" => "1970-01-01T00:00:00Z".to_string(),
+            _ => (now - chrono::Duration::days(v)).to_rfc3339(),
         }
     }
 }
@@ -132,7 +177,10 @@ mod tests {
         let config = Config::default();
         assert_eq!(config.cost.time_window, "day");
         assert_eq!(config.cost.watch_sources, vec!["claude", "codex"]);
-        assert!(config.cost.model_prices.is_empty());
+        assert_eq!(config.cost.sync_source, "all");
+        assert!(!config.cost.model_prices.is_empty());
+        assert!(config.cost.model_prices.contains_key("claude-opus-4-7"));
+        assert_eq!(config.cost.model_prices["claude-opus-4-7"].source, "bundled");
         assert!(config.cost.project_whitelist.is_empty());
         assert!(config.cost.last_sync_time.is_none());
     }

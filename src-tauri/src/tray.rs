@@ -18,14 +18,15 @@ fn format_cost_item(cost: Option<f64>) -> String {
     }
 }
 
-pub fn calculate_cost_since(time_window: &str) -> String {
+pub fn calculate_cost_since(time_window: &str, value: u32) -> String {
     let now = chrono::Utc::now();
+    let v = value.max(1) as i64;
     match time_window {
-        "day" => (now - chrono::Duration::days(1)).to_rfc3339(),
-        "month" => (now - chrono::Duration::days(30)).to_rfc3339(),
-        "year" => (now - chrono::Duration::days(365)).to_rfc3339(),
+        "day" => (now - chrono::Duration::days(v)).to_rfc3339(),
+        "month" => (now - chrono::Duration::days(v * 30)).to_rfc3339(),
+        "year" => (now - chrono::Duration::days(v * 365)).to_rfc3339(),
         "all" => "1970-01-01T00:00:00Z".to_string(),
-        _ => (now - chrono::Duration::days(1)).to_rfc3339(),
+        _ => (now - chrono::Duration::days(v)).to_rfc3339(),
     }
 }
 
@@ -181,12 +182,12 @@ mod tests {
 
     #[test]
     fn test_calculate_cost_since_all() {
-        assert_eq!(calculate_cost_since("all"), "1970-01-01T00:00:00Z");
+        assert_eq!(calculate_cost_since("all", 1), "1970-01-01T00:00:00Z");
     }
 
     #[test]
     fn test_calculate_cost_since_day() {
-        let since = calculate_cost_since("day");
+        let since = calculate_cost_since("day", 1);
         assert!(since.contains("T"));
         assert!(since.len() > 20);
     }

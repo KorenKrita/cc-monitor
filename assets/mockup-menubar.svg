@@ -1,42 +1,9 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="640" height="200" viewBox="0 0 640 200">
-  <!-- macOS menu bar simulation -->
-  <rect width="640" height="28" fill="#1c1c1e"/>
-
-  <!-- Left: Apple + app name -->
-  <text x="14" y="18" font-family="-apple-system, system-ui" font-size="14" fill="#f5f5f7"></text>
-  <text x="36" y="18" font-family="-apple-system, system-ui" font-size="13" fill="#f5f5f7" font-weight="600">Finder</text>
-  <text x="88" y="18" font-family="-apple-system, system-ui" font-size="13" fill="#c8c8c8">File</text>
-  <text x="118" y="18" font-family="-apple-system, system-ui" font-size="13" fill="#c8c8c8">Edit</text>
-  <text x="150" y="18" font-family="-apple-system, system-ui" font-size="13" fill="#c8c8c8">View</text>
-
-  <!-- Right side: CC Monitor tray text -->
-  <!-- tray.rs format: ⟨model⟩ rate↑ │ rate↓ │ ⏱ttft -->
-  <text x="350" y="18" font-family="'SF Mono', 'Fira Code', monospace" font-size="12" fill="#e2e8f0">⟨opus-4-7⟩ 42↑ │ 128↓ │ ⏱1.2s</text>
-
-  <!-- Right side system icons -->
-  <text x="590" y="18" font-family="-apple-system, system-ui" font-size="12" fill="#c8c8c8">Wi-Fi</text>
-  <text x="624" y="18" font-family="-apple-system, system-ui" font-size="12" fill="#c8c8c8">3:14</text>
-
-  <!-- Annotation: arrow pointing to tray text -->
-  <line x1="440" y1="32" x2="440" y2="52" stroke="#6366f1" stroke-width="1.5" opacity="0.7"/>
-  <polygon points="436,52 444,52 440,58" fill="#6366f1" opacity="0.7"/>
-
-  <!-- Explanation cards -->
-  <rect x="20" y="70" width="180" height="110" rx="8" fill="#0E1223" stroke="#272F42" stroke-width="1"/>
-  <text x="36" y="92" font-family="'Fira Code', monospace" font-size="9" fill="#64748B" letter-spacing="0.5">DISPLAY MODE: LAST</text>
-  <text x="36" y="116" font-family="'Fira Code', monospace" font-size="11" fill="#F8FAFC">⟨opus-4-7⟩</text>
-  <text x="36" y="134" font-family="'Fira Code', monospace" font-size="11" fill="#F8FAFC">42↑ │ 128↓ │ ⏱1.2s</text>
-  <text x="36" y="158" font-family="'Fira Sans', system-ui" font-size="9" fill="#94A3B8">Most recent request metrics</text>
-
-  <rect x="220" y="70" width="180" height="110" rx="8" fill="#0E1223" stroke="#272F42" stroke-width="1"/>
-  <text x="236" y="92" font-family="'Fira Code', monospace" font-size="9" fill="#64748B" letter-spacing="0.5">DISPLAY MODE: AVERAGE</text>
-  <text x="236" y="116" font-family="'Fira Code', monospace" font-size="11" fill="#F8FAFC">⟨avg 5m⟩</text>
-  <text x="236" y="134" font-family="'Fira Code', monospace" font-size="11" fill="#F8FAFC">38↑ │ 112↓ │ ⏱1.8s</text>
-  <text x="236" y="158" font-family="'Fira Sans', system-ui" font-size="9" fill="#94A3B8">Rolling average over N minutes</text>
-
-  <rect x="420" y="70" width="200" height="110" rx="8" fill="#0E1223" stroke="#272F42" stroke-width="1"/>
-  <text x="436" y="92" font-family="'Fira Code', monospace" font-size="9" fill="#64748B" letter-spacing="0.5">MODEL WHITELIST</text>
-  <text x="436" y="116" font-family="'Fira Code', monospace" font-size="11" fill="#F8FAFC">⟨sonnet-4-6⟩ 65↑ │ 200↓</text>
-  <text x="436" y="140" font-family="'Fira Sans', system-ui" font-size="9" fill="#94A3B8">Only updates for whitelisted</text>
-  <text x="436" y="154" font-family="'Fira Sans', system-ui" font-size="9" fill="#94A3B8">models, others ignored</text>
+<svg xmlns="http://www.w3.org/2000/svg" width="420" height="24" viewBox="0 0 420 24">
+  <rect width="420" height="24" fill="#1C1C1E"/>
+  <text y="16" font-family="'SF Mono', 'Fira Code', monospace" font-size="12" fill="#F8FAFC">
+    <tspan x="16">↓ 42 tok/s</tspan>
+    <tspan x="120">↑ 1.2k tok/s</tspan>
+    <tspan x="240">⏱ 2.1s</tspan>
+    <tspan x="330">$12.50</tspan>
+  </text>
 </svg>

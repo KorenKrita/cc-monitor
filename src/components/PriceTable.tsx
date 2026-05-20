@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { invoke } from "@tauri-apps/api/core";
-import { Config, ModelPrice } from "../types";
+import { Config, ModelPrice, SyncSource } from "../types";
 import { ThemeTokens } from "../theme";
 
 interface Props {
@@ -8,13 +8,16 @@ interface Props {
   models: string[];
   onUpdate: (prices: Record<string, ModelPrice>) => void;
   onSyncComplete: (config: Config) => void;
+  onSyncSourceChange: (source: SyncSource) => void;
   theme: ThemeTokens;
 }
 
-export function PriceTable({ config, models, onUpdate, onSyncComplete, theme }: Props) {
+export function PriceTable({ config, models, onUpdate, onSyncComplete, onSyncSourceChange, theme }: Props) {
   const [syncing, setSyncing] = useState(false);
+  const [newModel, setNewModel] = useState("");
 
   const prices = config.cost.model_prices;
+  const syncSource = config.cost.sync_source;
 
   const updatePrice = (model: string, field: keyof ModelPrice, value: number) => {
     const current = prices[model] || { input: 0, output: 0, cache: 0, source: "manual" };
@@ -25,7 +28,7 @@ export function PriceTable({ config, models, onUpdate, onSyncComplete, theme }: 
   const handleSync = async () => {
     setSyncing(true);
     try {
-      const newConfig = await invoke<Config>("sync_prices");
+      const newConfig = await invoke<Config>("sync_prices", { source: syncSource });
       onSyncComplete(newConfig);
     } catch (e) {
       console.error("Sync failed:", e);
@@ -34,7 +37,26 @@ export function PriceTable({ config, models, onUpdate, onSyncComplete, theme }: 
     }
   };
 
-  const allModels = [...new Set([...models, ...Object.keys(prices)])].sort();
+  const addModel = () => {
+    const name = newModel.trim();
+    if (!name) return;
+    const existing = prices[name];
+    if (existing && existing.source === "manual") return;
+    const updated = { ...prices, [name]: { input: existing?.input ?? 0, output: existing?.output ?? 0, cache: existing?.cache ?? 0, source: "manual" } };
+    onUpdate(updated);
+    setNewModel("");
+  };
+
+  const removePrice = (model: string) => {
+    const updated = { ...prices };
+    delete updated[model];
+    onUpdate(updated);
+  };
+
+  const displayModels = useMemo(() => [...new Set([
+    ...models,
+    ...Object.keys(prices).filter((m) => prices[m].source === "manual"),
+  ])].sort(), [models, prices]);
 
   const cellStyle = {
     background: theme.card,
@@ -44,8 +66,18 @@ export function PriceTable({ config, models, onUpdate, onSyncComplete, theme }: 
     fontSize: 10,
     color: theme.foreground,
     outline: "none",
-    width: 65,
+    width: 60,
     textAlign: "right" as const,
+  };
+
+  const selectStyle = {
+    background: theme.card,
+    border: `1px solid ${theme.border}`,
+    borderRadius: 4,
+    padding: "3px 6px",
+    fontSize: 10,
+    color: theme.foreground,
+    outline: "none",
   };
 
   return (
@@ -54,12 +86,22 @@ export function PriceTable({ config, models, onUpdate, onSyncComplete, theme }: 
         <span style={{ fontSize: 9, color: theme.muted, textTransform: "uppercase", letterSpacing: 0.5 }}>
           Model Prices ($/M tokens)
         </span>
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
           {config.cost.last_sync_time && (
             <span style={{ fontSize: 9, color: theme.muted }}>
-              Last sync: {new Date(config.cost.last_sync_time).toLocaleDateString()}
+              Last: {new Date(config.cost.last_sync_time).toLocaleDateString()}
             </span>
           )}
+          <select
+            value={syncSource}
+            onChange={(e) => onSyncSourceChange(e.target.value as SyncSource)}
+            style={selectStyle}
+          >
+            <option value="litellm">LiteLLM</option>
+            <option value="models.dev">models.dev</option>
+            <option value="basellm">BaseLLM</option>
+            <option value="all">All</option>
+          </select>
           <button
             onClick={handleSync}
             disabled={syncing}
@@ -83,10 +125,11 @@ export function PriceTable({ config, models, onUpdate, onSyncComplete, theme }: 
               <th style={{ textAlign: "right", padding: "2px 4px", fontWeight: 400 }}>Output</th>
               <th style={{ textAlign: "right", padding: "2px 4px", fontWeight: 400 }}>Cache</th>
               <th style={{ textAlign: "center", padding: "2px 4px", fontWeight: 400 }}>Src</th>
+              <th style={{ width: 20 }}></th>
             </tr>
           </thead>
           <tbody>
-            {allModels.map((model) => {
+            {displayModels.map((model) => {
               const p = prices[model] || { input: 0, output: 0, cache: 0, source: "" };
               const isManual = p.source === "manual";
               return (
@@ -95,40 +138,44 @@ export function PriceTable({ config, models, onUpdate, onSyncComplete, theme }: 
                     {model}
                   </td>
                   <td style={{ padding: "2px" }}>
-                    <input
-                      type="number"
-                      step="0.01"
-                      value={p.input ?? ""}
-                      onChange={(e) => updatePrice(model, "input", parseFloat(e.target.value) || 0)}
-                      style={cellStyle}
-                    />
+                    <input type="number" step="0.01" value={p.input ?? ""} onChange={(e) => updatePrice(model, "input", parseFloat(e.target.value) || 0)} style={cellStyle} />
                   </td>
                   <td style={{ padding: "2px" }}>
-                    <input
-                      type="number"
-                      step="0.01"
-                      value={p.output ?? ""}
-                      onChange={(e) => updatePrice(model, "output", parseFloat(e.target.value) || 0)}
-                      style={cellStyle}
-                    />
+                    <input type="number" step="0.01" value={p.output ?? ""} onChange={(e) => updatePrice(model, "output", parseFloat(e.target.value) || 0)} style={cellStyle} />
                   </td>
                   <td style={{ padding: "2px" }}>
-                    <input
-                      type="number"
-                      step="0.01"
-                      value={p.cache ?? ""}
-                      onChange={(e) => updatePrice(model, "cache", parseFloat(e.target.value) || 0)}
-                      style={cellStyle}
-                    />
+                    <input type="number" step="0.01" value={p.cache ?? ""} onChange={(e) => updatePrice(model, "cache", parseFloat(e.target.value) || 0)} style={cellStyle} />
                   </td>
-                  <td style={{ textAlign: "center", fontSize: 9, color: theme.muted }}>
-                    {p.source || "—"}
+                  <td style={{ textAlign: "center", fontSize: 9, color: theme.muted }}>{p.source || "—"}</td>
+                  <td style={{ padding: "2px" }}>
+                    {isManual && (
+                      <button onClick={() => removePrice(model)} style={{ background: "transparent", border: "none", color: "#EF4444", fontSize: 12, cursor: "pointer", padding: 0 }}>×</button>
+                    )}
                   </td>
                 </tr>
               );
             })}
           </tbody>
         </table>
+      </div>
+
+      <div style={{ display: "flex", gap: 4, marginTop: 6 }}>
+        <input
+          value={newModel}
+          onChange={(e) => setNewModel(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && addModel()}
+          placeholder="Add model..."
+          style={{ ...cellStyle, flex: 1, textAlign: "left", width: "auto" }}
+        />
+        <button
+          onClick={addModel}
+          disabled={!newModel.trim()}
+          style={{
+            background: theme.accentGreen, border: "none", borderRadius: 4,
+            color: "#fff", fontSize: 10, padding: "3px 8px", cursor: "pointer",
+            opacity: newModel.trim() ? 1 : 0.4,
+          }}
+        >+</button>
       </div>
     </div>
   );

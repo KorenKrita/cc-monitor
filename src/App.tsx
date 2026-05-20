@@ -12,7 +12,7 @@ import { Settings } from "./components/Settings";
 
 export default function App() {
   const { config, setConfig, resolvedTheme } = useSettings();
-  const { requests, models, latest, fetchData } = useMonitorData();
+  const { requests, models, latest, fetchData, refreshModels } = useMonitorData();
   const [metric, setMetric] = useState<Metric>("out_rate");
   const [timeRange, setTimeRange] = useState<TimeRange>("1h");
   const [selectedModels, setSelectedModels] = useState<string[]>([]);
@@ -57,6 +57,7 @@ export default function App() {
           models={models}
           onSave={(c) => { setConfig(c); setShowSettings(false); }}
           onClose={() => setShowSettings(false)}
+          onRefreshModels={refreshModels}
           theme={theme}
         />
       </div>

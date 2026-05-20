@@ -37,7 +37,7 @@ fn main() {
 
             // Create tray with hexagon icon + text
             let initial_cost = if config.tray.items.contains(&"cost".to_string()) {
-                let since = tray::calculate_cost_since(&config.cost.time_window);
+                let since = config.cost.cost_since();
                 db.calculate_cost(
                     &since,
                     &config.cost.project_whitelist,
@@ -147,7 +147,7 @@ fn main() {
                     }
 
                     let cost = if current_config.tray.items.contains(&"cost".to_string()) {
-                        let since = tray::calculate_cost_since(&current_config.cost.time_window);
+                        let since = current_config.cost.cost_since();
                         db_clone.calculate_cost(
                             &since,
                             &current_config.cost.project_whitelist,

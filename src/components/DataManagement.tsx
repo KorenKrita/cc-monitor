@@ -5,26 +5,53 @@ import { ThemeTokens } from "../theme";
 interface Props {
   models: string[];
   theme: ThemeTokens;
+  onRefresh: () => void;
 }
 
-export function DataManagement({ models, theme }: Props) {
+type ConfirmStage = "idle" | "first" | "second";
+
+const LABEL_MAP: Record<ConfirmStage, string> = {
+  idle: "Delete All",
+  first: "Confirm? (1/2)",
+  second: "Confirm? (2/2)",
+};
+
+export function DataManagement({ models, theme, onRefresh }: Props) {
   const [selectedModel, setSelectedModel] = useState("");
-  const [confirmAll, setConfirmAll] = useState(false);
+  const [confirmModel, setConfirmModel] = useState(false);
+  const [confirmStage, setConfirmStage] = useState<ConfirmStage>("idle");
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const deleteByModel = async () => {
     if (!selectedModel) return;
-    if (!window.confirm(`Delete all data for "${selectedModel}"?`)) return;
+    if (!confirmModel) {
+      setConfirmModel(true);
+      return;
+    }
     await invoke("delete_model_data", { model: selectedModel });
     setSelectedModel("");
+    setConfirmModel(false);
+    onRefresh();
   };
 
   const deleteAll = async () => {
-    if (!confirmAll) {
-      setConfirmAll(true);
+    if (isDeleting) return;
+    if (confirmStage === "idle") {
+      setConfirmStage("first");
       return;
     }
-    await invoke("delete_all_data");
-    setConfirmAll(false);
+    if (confirmStage === "first") {
+      setConfirmStage("second");
+      return;
+    }
+    setIsDeleting(true);
+    try {
+      await invoke("delete_all_data");
+      onRefresh();
+    } finally {
+      setIsDeleting(false);
+      setConfirmStage("idle");
+    }
   };
 
   const selectStyle = {
@@ -51,26 +78,42 @@ export function DataManagement({ models, theme }: Props) {
   return (
     <div>
       <div style={{ fontSize: 9, color: theme.muted, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 6 }}>
-        Data Management
+        Model History Data
       </div>
 
       <div style={{ display: "flex", gap: 6, alignItems: "center", marginBottom: 8 }}>
-        <select value={selectedModel} onChange={(e) => setSelectedModel(e.target.value)} style={selectStyle}>
+        <select
+          value={selectedModel}
+          onChange={(e) => { setSelectedModel(e.target.value); setConfirmModel(false); }}
+          style={selectStyle}
+        >
           <option value="">Select model...</option>
           {models.map((m) => <option key={m} value={m}>{m}</option>)}
         </select>
-        <button onClick={deleteByModel} disabled={!selectedModel} style={{ ...dangerBtn, opacity: selectedModel ? 1 : 0.4 }}>
-          Delete
+        <button onClick={deleteByModel} disabled={!selectedModel} style={{ ...dangerBtn, background: confirmModel ? "#DC2626" : "#EF4444", opacity: selectedModel ? 1 : 0.4 }}>
+          {confirmModel ? "Confirm?" : "Delete"}
         </button>
+        {confirmModel && (
+          <button
+            onClick={() => setConfirmModel(false)}
+            style={{ background: "transparent", border: `1px solid ${theme.border}`, borderRadius: 4, padding: "4px 10px", fontSize: 10, color: theme.muted, cursor: "pointer" }}
+          >
+            Cancel
+          </button>
+        )}
       </div>
 
       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-        <button onClick={deleteAll} style={{ ...dangerBtn, background: confirmAll ? "#DC2626" : "#EF4444" }}>
-          {confirmAll ? "Confirm Delete ALL Data" : "Delete All Data"}
+        <button
+          onClick={deleteAll}
+          disabled={isDeleting}
+          style={{ ...dangerBtn, background: confirmStage !== "idle" ? "#DC2626" : "#EF4444" }}
+        >
+          {LABEL_MAP[confirmStage]}
         </button>
-        {confirmAll && (
+        {confirmStage !== "idle" && (
           <button
-            onClick={() => setConfirmAll(false)}
+            onClick={() => setConfirmStage("idle")}
             style={{ background: "transparent", border: `1px solid ${theme.border}`, borderRadius: 4, padding: "4px 10px", fontSize: 10, color: theme.muted, cursor: "pointer" }}
           >
             Cancel

@@ -61,7 +61,16 @@ export function useMonitorData() {
     }
   }, []);
 
-  return { requests, models, latest, fetchData };
+  const refreshModels = useCallback(async () => {
+    try {
+      const m = await invoke<string[]>("get_models");
+      setModels(m);
+    } catch (e) {
+      console.error("Failed to refresh models:", e);
+    }
+  }, []);
+
+  return { requests, models, latest, fetchData, refreshModels };
 }
 
 function getTimeRange(range: TimeRange): { since: string; until: string | null } {

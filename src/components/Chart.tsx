@@ -72,10 +72,6 @@ export function Chart({ requests, metric, timeRange, selectedModels, models, the
             if (timeRange === "1h") {
               return `${d.getHours().toString().padStart(2, "0")}:${d.getMinutes().toString().padStart(2, "0")}`;
             }
-            if (d.getHours() === 0 && d.getMinutes() === 0) {
-              const prev = new Date(value - 1);
-              if (prev.getDate() !== d.getDate()) return "24:00";
-            }
             return `${d.getHours()}:00`;
           },
         },

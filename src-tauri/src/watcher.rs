@@ -11,7 +11,7 @@ use crate::config::load_config;
 use crate::parser::{ParsedRequest, SessionTracker};
 
 fn should_watch(sources: &[String], name: &str) -> bool {
-    sources.is_empty() || sources.contains(&name.to_string())
+    sources.is_empty() || sources.iter().any(|s| s == name)
 }
 
 pub fn start_polling(tx: mpsc::UnboundedSender<ParsedRequest>) {

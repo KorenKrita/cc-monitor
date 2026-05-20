@@ -14,7 +14,7 @@ export interface RequestRecord {
 export type Metric = "out_rate" | "in_rate" | "ttft" | "cost";
 export type TimeRange = "1h" | "today" | "yesterday";
 export type Theme = "system" | "dark" | "light";
-export type CostTimeWindow = "day" | "month" | "year" | "all";
+export type CostTimeUnit = "day" | "month" | "year" | "all";
 export type WatchSource = "claude" | "codex";
 
 export interface ModelPrice {
@@ -24,13 +24,17 @@ export interface ModelPrice {
   source: string;
 }
 
+export type SyncSource = "litellm" | "models.dev" | "basellm" | "all";
+
 export interface CostConfig {
-  time_window: CostTimeWindow;
+  time_window: CostTimeUnit;
+  time_window_value: number;
   project_whitelist: string[];
   model_whitelist: string[];
   model_prices: Record<string, ModelPrice>;
   last_sync_time: string | null;
   watch_sources: WatchSource[];
+  sync_source: SyncSource;
 }
 
 export interface Config {

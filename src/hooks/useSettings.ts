@@ -7,7 +7,7 @@ export function useSettings() {
     theme: "system",
     tray: { items: ["out_rate", "in_rate", "ttft"], model_filter: "last", model_whitelist: [], display_mode: "last", average_minutes: 5 },
     model_aliases: {},
-    cost: { time_window: "day", project_whitelist: [], model_whitelist: [], model_prices: {}, last_sync_time: null, watch_sources: ["claude", "codex"] },
+    cost: { time_window: "day", time_window_value: 1, project_whitelist: [], model_whitelist: [], model_prices: {}, last_sync_time: null, watch_sources: ["claude", "codex"], sync_source: "all" },
   });
 
   useEffect(() => {

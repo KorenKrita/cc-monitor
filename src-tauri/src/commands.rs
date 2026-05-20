@@ -35,7 +35,7 @@ pub fn set_config(app: AppHandle, state: State<AppState>, config: Config) -> Res
     save_config(&config)?;
 
     let cost = if config.tray.items.contains(&"cost".to_string()) {
-        let since = tray::calculate_cost_since(&config.cost.time_window);
+        let since = config.cost.cost_since();
         state.db.calculate_cost(
             &since,
             &config.cost.project_whitelist,
@@ -77,7 +77,7 @@ pub fn quit_app(app: AppHandle) -> Result<(), String> {
 #[tauri::command]
 pub fn get_cost(state: State<AppState>) -> Result<f64, String> {
     let config = load_config();
-    let since = tray::calculate_cost_since(&config.cost.time_window);
+    let since = config.cost.cost_since();
     state.db.calculate_cost(
         &since,
         &config.cost.project_whitelist,
@@ -87,11 +87,12 @@ pub fn get_cost(state: State<AppState>) -> Result<f64, String> {
 }
 
 #[tauri::command]
-pub async fn sync_prices() -> Result<Config, String> {
+pub async fn sync_prices(source: String) -> Result<Config, String> {
     let mut config = load_config();
-    let synced = crate::price_sync::sync_prices(&config.cost.model_prices).await?;
+    let synced = crate::price_sync::sync_prices(&config.cost.model_prices, &source).await?;
     config.cost.model_prices = synced;
     config.cost.last_sync_time = Some(chrono::Utc::now().to_rfc3339());
+    config.cost.sync_source = source;
     save_config(&config)?;
     Ok(config)
 }

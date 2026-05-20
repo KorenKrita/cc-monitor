@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
-import { Config, Theme, Metric, CostTimeWindow, WatchSource } from "../types";
+import { Config, Theme, Metric, CostTimeUnit, WatchSource } from "../types";
 import { ThemeTokens } from "../theme";
 import { PriceTable } from "./PriceTable";
 import { DataManagement } from "./DataManagement";
@@ -10,10 +10,11 @@ interface Props {
   models: string[];
   onSave: (config: Config) => void;
   onClose: () => void;
+  onRefreshModels: () => void;
   theme: ThemeTokens;
 }
 
-export function Settings({ config, models, onSave, onClose, theme }: Props) {
+export function Settings({ config, models, onSave, onClose, onRefreshModels, theme }: Props) {
   const [draft, setDraft] = useState<Config>(structuredClone(config));
 
   const save = async () => {
@@ -259,16 +260,27 @@ export function Settings({ config, models, onSave, onClose, theme }: Props) {
         {/* Cost — Time Window */}
         <div>
           <div style={labelStyle}>Cost — Time Window</div>
-          <select
-            value={draft.cost.time_window}
-            onChange={(e) => setDraft({ ...draft, cost: { ...draft.cost, time_window: e.target.value as CostTimeWindow } })}
-            style={selectStyle}
-          >
-            <option value="day">Day</option>
-            <option value="month">Month</option>
-            <option value="year">Year</option>
-            <option value="all">All Time</option>
-          </select>
+          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+            <input
+              type="number"
+              min={1}
+              max={365}
+              value={draft.cost.time_window_value ?? 1}
+              onChange={(e) => setDraft({ ...draft, cost: { ...draft.cost, time_window_value: parseInt(e.target.value) || 1 } })}
+              style={{ ...inputStyle, width: 50, textAlign: "center" as const }}
+              disabled={draft.cost.time_window === "all"}
+            />
+            <select
+              value={draft.cost.time_window}
+              onChange={(e) => setDraft({ ...draft, cost: { ...draft.cost, time_window: e.target.value as CostTimeUnit } })}
+              style={{ ...selectStyle, flex: 1 }}
+            >
+              <option value="day">Day</option>
+              <option value="month">Month</option>
+              <option value="year">Year</option>
+              <option value="all">All Time</option>
+            </select>
+          </div>
         </div>
 
         {/* Watch Sources */}
@@ -306,11 +318,11 @@ export function Settings({ config, models, onSave, onClose, theme }: Props) {
               const list = e.target.value.split("\n").map((s) => s.trim()).filter(Boolean);
               setDraft({ ...draft, cost: { ...draft.cost, project_whitelist: list } });
             }}
-            placeholder="Leave empty for all projects"
+            placeholder={"-Users-korenkrita-Coding-project-a\n-Users-korenkrita-Coding-project-b"}
             style={{ ...inputStyle, height: 50, resize: "vertical" as const, fontFamily: "'Fira Code', monospace" }}
           />
           <div style={{ fontSize: 9, color: theme.muted, marginTop: 3 }}>
-            One project per line. Empty = all projects counted.
+            One project per line, format: -Users-name-path-to-project. Empty = all projects counted.
           </div>
         </div>
 
@@ -320,11 +332,12 @@ export function Settings({ config, models, onSave, onClose, theme }: Props) {
           models={models}
           onUpdate={(prices) => setDraft({ ...draft, cost: { ...draft.cost, model_prices: prices } })}
           onSyncComplete={(newConfig) => setDraft({ ...draft, cost: { ...draft.cost, model_prices: newConfig.cost.model_prices, last_sync_time: newConfig.cost.last_sync_time } })}
+          onSyncSourceChange={(source) => setDraft({ ...draft, cost: { ...draft.cost, sync_source: source } })}
           theme={theme}
         />
 
         {/* Data Management */}
-        <DataManagement models={models} theme={theme} />
+        <DataManagement models={models} theme={theme} onRefresh={onRefreshModels} />
       </div>
 
       {/* Footer buttons */}
