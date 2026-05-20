@@ -48,7 +48,7 @@ Tracks all models separately (Opus, Sonnet, Haiku, GPT-4o, Gemini, DeepSeek, etc
 - **Cost time window**: Configurable N days/months/years/all time
 - **Price sync**: LiteLLM / models.dev / BaseLLM / All, with manual override
 - **Watch sources**: Claude Code / Codex CLI toggle
-- **Project whitelist**: Track cost for specific projects only
+- **Project whitelist**: Track cost for specific projects only (accepts normal paths like `/Users/name/project`)
 - **Data management**: Delete by model or clear all history
 
 ## Install

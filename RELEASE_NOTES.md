@@ -37,6 +37,8 @@
 
 ### Improvements
 
+- Window is now draggable by clicking and dragging any empty area
+- Project whitelist accepts normal paths (`/Users/name/project`) instead of encoded format
 - Cost time window now accepts a numeric value (e.g., "3 days" instead of just "day")
 - Project whitelist shows format example in placeholder
 - Price table only shows models with actual usage data + manually added ones
