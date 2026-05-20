@@ -9,6 +9,7 @@ struct CodexSessionState {
     model: String,
     last_input: i64,
     last_output: i64,
+    turn_start: Option<String>,
 }
 
 // Encode cwd path to match Claude's project format: /Users/foo/bar → -Users-foo-bar
@@ -53,6 +54,17 @@ impl CodexSessionTracker {
             }
             "event_msg" => {
                 let msg_type = payload.get("type")?.as_str()?;
+
+                if msg_type == "user_message" {
+                    if let Some(ts) = value.get("timestamp").and_then(|t| t.as_str()) {
+                        let mut state = self.session_state.lock().ok()?;
+                        if let Some(session) = state.get_mut(file_id) {
+                            session.turn_start = Some(ts.to_string());
+                        }
+                    }
+                    return None;
+                }
+
                 if msg_type != "token_count" {
                     return None;
                 }
@@ -86,8 +98,15 @@ impl CodexSessionTracker {
                 let timestamp = if timestamp.is_empty() {
                     chrono::Utc::now().to_rfc3339()
                 } else {
-                    timestamp
+                    timestamp.clone()
                 };
+
+                let duration_ms = session.turn_start.as_ref().and_then(|start_ts| {
+                    let start = chrono::DateTime::parse_from_rfc3339(start_ts).ok()?;
+                    let end = chrono::DateTime::parse_from_rfc3339(&timestamp).ok()?;
+                    let ms = end.signed_duration_since(start).num_milliseconds();
+                    if ms > 0 { Some(ms) } else { None }
+                });
 
                 Some(ParsedRequest {
                     timestamp,
@@ -96,7 +115,7 @@ impl CodexSessionTracker {
                     output_tokens: output_tokens + reasoning_tokens,
                     cache_creation_tokens: 0,
                     cache_read_tokens: cached_input,
-                    duration_ms: None,
+                    duration_ms,
                     project: encode_cwd_as_project(&session.cwd),
                     source: "codex".to_string(),
                 })
@@ -124,6 +143,7 @@ mod tests {
 
         tracker.parse_line(r#"{"type":"session_meta","payload":{"cwd":"/Users/test/project","id":"abc"}}"#, "f1");
         tracker.parse_line(r#"{"type":"turn_context","payload":{"model":"o3-pro","turn_id":"t1","cwd":"/Users/test/project"}}"#, "f1");
+        tracker.parse_line(r#"{"timestamp":"2026-05-20T03:25:34.000Z","type":"event_msg","payload":{"type":"user_message","message":"hello"}}"#, "f1");
 
         let event = r#"{"timestamp":"2026-05-20T03:25:43.671Z","type":"event_msg","payload":{"type":"token_count","info":{"last_token_usage":{"input_tokens":2000,"output_tokens":800,"reasoning_output_tokens":400,"cached_input_tokens":500}}}}"#;
         let result = tracker.parse_line(event, "f1").unwrap();
@@ -135,6 +155,7 @@ mod tests {
         assert_eq!(result.project, "-Users-test-project");
         assert_eq!(result.source, "codex");
         assert_eq!(result.timestamp, "2026-05-20T03:25:43.671Z");
+        assert_eq!(result.duration_ms, Some(9671));
     }
 
     #[test]
