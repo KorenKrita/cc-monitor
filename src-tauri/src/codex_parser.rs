@@ -7,6 +7,8 @@ use crate::parser::ParsedRequest;
 struct CodexSessionState {
     cwd: String,
     model: String,
+    last_input: i64,
+    last_output: i64,
 }
 
 // Encode cwd path to match Claude's project format: /Users/foo/bar → -Users-foo-bar
@@ -28,10 +30,11 @@ impl CodexSessionTracker {
     pub fn parse_line(&self, line: &str, file_id: &str) -> Option<ParsedRequest> {
         let value: serde_json::Value = serde_json::from_str(line).ok()?;
         let entry_type = value.get("type")?.as_str()?;
+        let payload = value.get("payload")?;
 
         match entry_type {
             "session_meta" => {
-                let cwd = value.get("cwd")?.as_str()?.to_string();
+                let cwd = payload.get("cwd")?.as_str()?.to_string();
                 let mut state = self.session_state.lock().ok()?;
                 state.entry(file_id.to_string()).or_default().cwd = cwd;
                 if state.len() > 200 {
@@ -42,14 +45,19 @@ impl CodexSessionTracker {
                 None
             }
             "turn_context" => {
-                if let Some(model) = value.get("model").and_then(|m| m.as_str()) {
+                if let Some(model) = payload.get("model").and_then(|m| m.as_str()) {
                     let mut state = self.session_state.lock().ok()?;
                     state.entry(file_id.to_string()).or_default().model = model.to_string();
                 }
                 None
             }
             "event_msg" => {
-                let info = value.get("info")?;
+                let msg_type = payload.get("type")?.as_str()?;
+                if msg_type != "token_count" {
+                    return None;
+                }
+
+                let info = payload.get("info")?;
                 let last_usage = info.get("last_token_usage")?;
 
                 let input_tokens = last_usage.get("input_tokens")?.as_i64().unwrap_or(0);
@@ -57,14 +65,29 @@ impl CodexSessionTracker {
                 let reasoning_tokens = last_usage.get("reasoning_output_tokens").and_then(|v| v.as_i64()).unwrap_or(0);
                 let cached_input = last_usage.get("cached_input_tokens").and_then(|v| v.as_i64()).unwrap_or(0);
 
-                let state = self.session_state.lock().ok()?;
-                let session = state.get(file_id)?;
+                let mut state = self.session_state.lock().ok()?;
+                let session = state.get_mut(file_id)?;
 
                 if session.model.is_empty() {
                     return None;
                 }
 
-                let timestamp = chrono::Utc::now().to_rfc3339();
+                // Skip duplicate token_count events
+                if input_tokens == session.last_input && output_tokens == session.last_output {
+                    return None;
+                }
+                session.last_input = input_tokens;
+                session.last_output = output_tokens;
+
+                let timestamp = value.get("timestamp")
+                    .and_then(|t| t.as_str())
+                    .unwrap_or("")
+                    .to_string();
+                let timestamp = if timestamp.is_empty() {
+                    chrono::Utc::now().to_rfc3339()
+                } else {
+                    timestamp
+                };
 
                 Some(ParsedRequest {
                     timestamp,
@@ -90,7 +113,7 @@ mod tests {
     #[test]
     fn test_session_meta_stores_cwd() {
         let tracker = CodexSessionTracker::new();
-        let line = r#"{"type":"session_meta","cwd":"/Users/test/project"}"#;
+        let line = r#"{"type":"session_meta","payload":{"cwd":"/Users/test/project","id":"abc"}}"#;
         let result = tracker.parse_line(line, "file1");
         assert!(result.is_none());
     }
@@ -99,10 +122,10 @@ mod tests {
     fn test_full_flow() {
         let tracker = CodexSessionTracker::new();
 
-        tracker.parse_line(r#"{"type":"session_meta","cwd":"/Users/test/project"}"#, "f1");
-        tracker.parse_line(r#"{"type":"turn_context","model":"o3-pro"}"#, "f1");
+        tracker.parse_line(r#"{"type":"session_meta","payload":{"cwd":"/Users/test/project","id":"abc"}}"#, "f1");
+        tracker.parse_line(r#"{"type":"turn_context","payload":{"model":"o3-pro","turn_id":"t1","cwd":"/Users/test/project"}}"#, "f1");
 
-        let event = r#"{"type":"event_msg","info":{"last_token_usage":{"input_tokens":2000,"output_tokens":800,"reasoning_output_tokens":400,"cached_input_tokens":500}}}"#;
+        let event = r#"{"timestamp":"2026-05-20T03:25:43.671Z","type":"event_msg","payload":{"type":"token_count","info":{"last_token_usage":{"input_tokens":2000,"output_tokens":800,"reasoning_output_tokens":400,"cached_input_tokens":500}}}}"#;
         let result = tracker.parse_line(event, "f1").unwrap();
 
         assert_eq!(result.model, "o3-pro");
@@ -111,14 +134,25 @@ mod tests {
         assert_eq!(result.cache_read_tokens, 500);
         assert_eq!(result.project, "-Users-test-project");
         assert_eq!(result.source, "codex");
+        assert_eq!(result.timestamp, "2026-05-20T03:25:43.671Z");
     }
 
     #[test]
     fn test_no_model_returns_none() {
         let tracker = CodexSessionTracker::new();
-        tracker.parse_line(r#"{"type":"session_meta","cwd":"/tmp"}"#, "f1");
+        tracker.parse_line(r#"{"type":"session_meta","payload":{"cwd":"/tmp","id":"x"}}"#, "f1");
 
-        let event = r#"{"type":"event_msg","info":{"last_token_usage":{"input_tokens":100,"output_tokens":50}}}"#;
+        let event = r#"{"timestamp":"2026-05-20T03:25:43Z","type":"event_msg","payload":{"type":"token_count","info":{"last_token_usage":{"input_tokens":100,"output_tokens":50}}}}"#;
+        assert!(tracker.parse_line(event, "f1").is_none());
+    }
+
+    #[test]
+    fn test_non_token_event_ignored() {
+        let tracker = CodexSessionTracker::new();
+        tracker.parse_line(r#"{"type":"session_meta","payload":{"cwd":"/tmp","id":"x"}}"#, "f1");
+        tracker.parse_line(r#"{"type":"turn_context","payload":{"model":"gpt-4o","turn_id":"t1","cwd":"/tmp"}}"#, "f1");
+
+        let event = r#"{"timestamp":"2026-05-20T03:25:34Z","type":"event_msg","payload":{"type":"task_started","turn_id":"t1"}}"#;
         assert!(tracker.parse_line(event, "f1").is_none());
     }
 
@@ -126,13 +160,13 @@ mod tests {
     fn test_multiple_sessions_isolated() {
         let tracker = CodexSessionTracker::new();
 
-        tracker.parse_line(r#"{"type":"session_meta","cwd":"/project-a"}"#, "f1");
-        tracker.parse_line(r#"{"type":"turn_context","model":"gpt-4o"}"#, "f1");
+        tracker.parse_line(r#"{"type":"session_meta","payload":{"cwd":"/project-a","id":"a"}}"#, "f1");
+        tracker.parse_line(r#"{"type":"turn_context","payload":{"model":"gpt-4o","turn_id":"t1","cwd":"/project-a"}}"#, "f1");
 
-        tracker.parse_line(r#"{"type":"session_meta","cwd":"/project-b"}"#, "f2");
-        tracker.parse_line(r#"{"type":"turn_context","model":"o3"}"#, "f2");
+        tracker.parse_line(r#"{"type":"session_meta","payload":{"cwd":"/project-b","id":"b"}}"#, "f2");
+        tracker.parse_line(r#"{"type":"turn_context","payload":{"model":"o3","turn_id":"t2","cwd":"/project-b"}}"#, "f2");
 
-        let event = r#"{"type":"event_msg","info":{"last_token_usage":{"input_tokens":100,"output_tokens":50}}}"#;
+        let event = r#"{"timestamp":"2026-05-20T03:25:52Z","type":"event_msg","payload":{"type":"token_count","info":{"last_token_usage":{"input_tokens":100,"output_tokens":50}}}}"#;
 
         let r1 = tracker.parse_line(event, "f1").unwrap();
         assert_eq!(r1.model, "gpt-4o");
