@@ -318,11 +318,11 @@ export function Settings({ config, models, onSave, onClose, onRefreshModels, the
               const list = e.target.value.split("\n").map((s) => s.trim()).filter(Boolean);
               setDraft({ ...draft, cost: { ...draft.cost, project_whitelist: list } });
             }}
-            placeholder={"-Users-korenkrita-Coding-project-a\n-Users-korenkrita-Coding-project-b"}
+            placeholder={"/Users/username/Coding/project-a\n/Users/username/Coding/project-b"}
             style={{ ...inputStyle, height: 50, resize: "vertical" as const, fontFamily: "'Fira Code', monospace" }}
           />
           <div style={{ fontSize: 9, color: theme.muted, marginTop: 3 }}>
-            One project per line, format: -Users-name-path-to-project. Empty = all projects counted.
+            One project per line, use full path. Empty = all projects counted.
           </div>
         </div>
 

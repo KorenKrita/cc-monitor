@@ -202,11 +202,14 @@ impl Database {
         let mut param_idx = 2;
 
         if !project_whitelist.is_empty() {
-            let placeholders: Vec<String> = project_whitelist.iter().enumerate()
+            let encoded: Vec<String> = project_whitelist.iter()
+                .map(|p| if p.starts_with('/') { p.replace('/', "-") } else { p.clone() })
+                .collect();
+            let placeholders: Vec<String> = encoded.iter().enumerate()
                 .map(|(i, _)| format!("?{}", i + param_idx)).collect();
             sql.push_str(&format!(" AND project IN ({})", placeholders.join(",")));
-            param_idx += project_whitelist.len();
-            for p in project_whitelist {
+            param_idx += encoded.len();
+            for p in &encoded {
                 param_values.push(Box::new(p.clone()));
             }
         }
