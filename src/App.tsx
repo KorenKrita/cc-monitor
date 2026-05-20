@@ -51,7 +51,7 @@ export default function App() {
 
   if (showSettings) {
     return (
-      <div style={{ background: theme.bg, color: theme.foreground, fontFamily: "'Fira Sans', system-ui, sans-serif", height: "100vh", overflow: "hidden", position: "relative" }}>
+      <div data-tauri-drag-region style={{ background: theme.bg, color: theme.foreground, fontFamily: "'Fira Sans', system-ui, sans-serif", height: "100vh", overflow: "hidden", position: "relative" }}>
         <Settings
           config={config}
           models={models}
@@ -65,7 +65,7 @@ export default function App() {
   }
 
   return (
-    <div style={{ background: theme.bg, color: theme.foreground, fontFamily: "'Fira Sans', system-ui, sans-serif", padding: 20, height: "100vh", overflow: "hidden", position: "relative" }}>
+    <div data-tauri-drag-region style={{ background: theme.bg, color: theme.foreground, fontFamily: "'Fira Sans', system-ui, sans-serif", padding: 20, height: "100vh", overflow: "hidden", position: "relative" }}>
       {/* Close */}
       <button
         onClick={() => invoke("hide_window")}
